@@ -1,0 +1,367 @@
+make,model,model_year,vehicle_type,electric_range_km,electric_range_miles,base_msrp_numeric
+Toyota,RAV4 PRIME,2022,Plug-In Hybrid Electric Vehicle (Phev),42.0,26.097582,0.0
+Chevrolet,VOLT,2013,Plug-In Hybrid Electric Vehicle (Phev),38.0,23.612098,0.0
+Nissan,LEAF,2011,Battery Electric Vehicle (Bev),73.0,45.360083,0.0
+Chevrolet,BOLT EV,2017,Battery Electric Vehicle (Bev),238.0,147.886298,0.0
+Ford,FUSION,2019,Plug-In Hybrid Electric Vehicle (Phev),26.0,16.155646,0.0
+Tesla,MODEL 3,2018,Battery Electric Vehicle (Bev),215.0,133.594765,0.0
+Nissan,LEAF,2013,Battery Electric Vehicle (Bev),75.0,46.602825,0.0
+Nissan,LEAF,2016,Battery Electric Vehicle (Bev),84.0,52.195164,0.0
+Kia,SOUL,2016,Battery Electric Vehicle (Bev),93.0,57.787503,31950.0
+Audi,Q5 E,2020,Plug-In Hybrid Electric Vehicle (Phev),20.0,12.42742,0.0
+Tesla,MODEL X,2020,Battery Electric Vehicle (Bev),293.0,182.061703,0.0
+Fiat,500,2016,Battery Electric Vehicle (Bev),84.0,52.195164,0.0
+Chevrolet,VOLT,2016,Plug-In Hybrid Electric Vehicle (Phev),53.0,32.932663,0.0
+Nissan,LEAF,2019,Battery Electric Vehicle (Bev),150.0,93.20565,0.0
+Nissan,LEAF,2017,Battery Electric Vehicle (Bev),107.0,66.486697,0.0
+Bmw,X5,2016,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Tesla,MODEL X,2016,Battery Electric Vehicle (Bev),200.0,124.27420000000001,0.0
+Chevrolet,VOLT,2017,Plug-In Hybrid Electric Vehicle (Phev),53.0,32.932663,0.0
+Nissan,LEAF,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Bmw,530E,2019,Plug-In Hybrid Electric Vehicle (Phev),15.0,9.320565,55700.0
+Nissan,LEAF,2018,Battery Electric Vehicle (Bev),151.0,93.827021,0.0
+Tesla,MODEL 3,2020,Battery Electric Vehicle (Bev),266.0,165.284686,0.0
+Porsche,TAYCAN,2020,Battery Electric Vehicle (Bev),192.0,119.30323200000001,0.0
+Bmw,X3,2021,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Audi,A3,2016,Plug-In Hybrid Electric Vehicle (Phev),16.0,9.941936,0.0
+Tesla,MODEL X,2017,Battery Electric Vehicle (Bev),200.0,124.27420000000001,0.0
+Tesla,MODEL 3,2019,Battery Electric Vehicle (Bev),220.0,136.70162,0.0
+Kia,SOUL EV,2018,Battery Electric Vehicle (Bev),111.0,68.972181,33950.0
+Ford,C-MAX,2013,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Fiat,500,2013,Battery Electric Vehicle (Bev),87.0,54.059277,0.0
+Tesla,MODEL S,2018,Battery Electric Vehicle (Bev),249.0,154.721379,0.0
+Ford,F-150,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Tesla,MODEL S,2016,Battery Electric Vehicle (Bev),210.0,130.48791,0.0
+Cadillac,CT6,2018,Plug-In Hybrid Electric Vehicle (Phev),31.0,19.262501,0.0
+Tesla,MODEL S,2015,Battery Electric Vehicle (Bev),208.0,129.245168,0.0
+Bmw,I3,2016,Plug-In Hybrid Electric Vehicle (Phev),72.0,44.738712,0.0
+Chevrolet,BOLT EV,2020,Battery Electric Vehicle (Bev),259.0,160.935089,0.0
+Ford,C-MAX,2014,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Honda,CLARITY,2018,Plug-In Hybrid Electric Vehicle (Phev),47.0,29.204437,0.0
+Tesla,MODEL Y,2020,Battery Electric Vehicle (Bev),291.0,180.818961,0.0
+Nissan,LEAF,2015,Battery Electric Vehicle (Bev),84.0,52.195164,0.0
+Nissan,LEAF,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Chevrolet,BOLT EV,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Nissan,LEAF,2012,Battery Electric Vehicle (Bev),73.0,45.360083,0.0
+Tesla,MODEL Y,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Tesla,MODEL Y,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Kia,NIRO,2020,Battery Electric Vehicle (Bev),239.0,148.507669,0.0
+Mitsubishi,OUTLANDER,2018,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Ford,FUSION,2016,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Chrysler,PACIFICA,2020,Plug-In Hybrid Electric Vehicle (Phev),32.0,19.883872,0.0
+Rivian,R1T,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Nissan,LEAF,2020,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Chevrolet,VOLT,2014,Plug-In Hybrid Electric Vehicle (Phev),38.0,23.612098,0.0
+Hyundai,KONA ELECTRIC,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Volvo,XC40,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Tesla,MODEL 3,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Volkswagen,ID.4,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Chevrolet,BOLT EV,2018,Battery Electric Vehicle (Bev),238.0,147.886298,0.0
+Nissan,LEAF,2014,Battery Electric Vehicle (Bev),84.0,52.195164,0.0
+Toyota,PRIUS PLUG-IN,2012,Plug-In Hybrid Electric Vehicle (Phev),6.0,3.7282260000000003,0.0
+Ford,MUSTANG MACH-E,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Kia,NIRO,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Mercedes-Benz,EQB-CLASS,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Toyota,RAV4 PRIME,2021,Plug-In Hybrid Electric Vehicle (Phev),42.0,26.097582,0.0
+Tesla,MODEL 3,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Volkswagen,E-GOLF,2016,Battery Electric Vehicle (Bev),83.0,51.573793,0.0
+Toyota,PRIUS PRIME,2017,Plug-In Hybrid Electric Vehicle (Phev),25.0,15.534275000000001,0.0
+Volkswagen,E-GOLF,2019,Battery Electric Vehicle (Bev),125.0,77.671375,0.0
+Volvo,C40,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Chevrolet,BOLT EV,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Kia,NIRO,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Ford,MUSTANG MACH-E,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Ford,FUSION,2017,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Tesla,MODEL S,2017,Battery Electric Vehicle (Bev),210.0,130.48791,0.0
+Toyota,PRIUS PRIME,2018,Plug-In Hybrid Electric Vehicle (Phev),25.0,15.534275000000001,0.0
+Bmw,I3,2018,Plug-In Hybrid Electric Vehicle (Phev),97.0,60.272987,0.0
+Tesla,MODEL S,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Tesla,MODEL X,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Volvo,XC40,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Kia,SORENTO,2022,Plug-In Hybrid Electric Vehicle (Phev),32.0,19.883872,0.0
+Toyota,PRIUS PLUG-IN,2013,Plug-In Hybrid Electric Vehicle (Phev),6.0,3.7282260000000003,0.0
+Chevrolet,VOLT,2018,Plug-In Hybrid Electric Vehicle (Phev),53.0,32.932663,0.0
+Volkswagen,E-GOLF,2018,Battery Electric Vehicle (Bev),125.0,77.671375,0.0
+Tesla,MODEL X,2019,Battery Electric Vehicle (Bev),289.0,179.576219,0.0
+Volvo,XC60,2022,Plug-In Hybrid Electric Vehicle (Phev),18.0,11.184678,0.0
+Tesla,MODEL S,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Tesla,MODEL S,2014,Battery Electric Vehicle (Bev),208.0,129.245168,69900.0
+Porsche,CAYENNE,2019,Plug-In Hybrid Electric Vehicle (Phev),13.0,8.077823,0.0
+Jeep,WRANGLER,2021,Plug-In Hybrid Electric Vehicle (Phev),25.0,15.534275000000001,0.0
+Ford,FUSION,2018,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Bmw,I3,2017,Plug-In Hybrid Electric Vehicle (Phev),97.0,60.272987,0.0
+Mini,COUNTRYMAN,2019,Plug-In Hybrid Electric Vehicle (Phev),12.0,7.4564520000000005,36900.0
+Jeep,WRANGLER,2022,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Volkswagen,ID.4,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Tesla,MODEL X,2018,Battery Electric Vehicle (Bev),238.0,147.886298,0.0
+Chrysler,PACIFICA,2022,Plug-In Hybrid Electric Vehicle (Phev),32.0,19.883872,0.0
+Toyota,PRIUS PRIME,2020,Plug-In Hybrid Electric Vehicle (Phev),25.0,15.534275000000001,0.0
+Volvo,S60,2021,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Kia,EV6,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Smart,FORTWO ELECTRIC DRIVE,2015,Battery Electric Vehicle (Bev),68.0,42.253228,0.0
+Bmw,X5,2022,Plug-In Hybrid Electric Vehicle (Phev),30.0,18.64113,0.0
+Volvo,S60,2022,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Tesla,MODEL 3,2017,Battery Electric Vehicle (Bev),220.0,136.70162,0.0
+Fiat,500,2014,Battery Electric Vehicle (Bev),87.0,54.059277,0.0
+Audi,A3,2017,Plug-In Hybrid Electric Vehicle (Phev),16.0,9.941936,0.0
+Jeep,GRAND CHEROKEE,2022,Plug-In Hybrid Electric Vehicle (Phev),25.0,15.534275000000001,0.0
+Bmw,I3,2014,Plug-In Hybrid Electric Vehicle (Phev),72.0,44.738712,0.0
+Nissan,LEAF,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Fiat,500,2015,Battery Electric Vehicle (Bev),87.0,54.059277,0.0
+Bmw,330E,2016,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,43700.0
+Hyundai,KONA ELECTRIC,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Subaru,CROSSTREK,2019,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,34995.0
+Chrysler,PACIFICA,2019,Plug-In Hybrid Electric Vehicle (Phev),32.0,19.883872,39995.0
+Kia,NIRO,2019,Plug-In Hybrid Electric Vehicle (Phev),26.0,16.155646,0.0
+Kia,SOUL EV,2017,Battery Electric Vehicle (Bev),93.0,57.787503,32250.0
+Hyundai,IONIQ 5,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Toyota,PRIUS PRIME,2021,Plug-In Hybrid Electric Vehicle (Phev),25.0,15.534275000000001,0.0
+Hyundai,IONIQ,2020,Battery Electric Vehicle (Bev),170.0,105.63307,0.0
+Bmw,330E,2017,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,44100.0
+Mitsubishi,OUTLANDER,2019,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Tesla,MODEL Y,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Ford,FUSION,2014,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Audi,A3,2018,Plug-In Hybrid Electric Vehicle (Phev),16.0,9.941936,0.0
+Ford,FUSION,2015,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Audi,E-TRON,2019,Battery Electric Vehicle (Bev),204.0,126.75968400000001,0.0
+Tesla,ROADSTER,2010,Battery Electric Vehicle (Bev),245.0,152.235895,110950.0
+Hyundai,KONA,2020,Battery Electric Vehicle (Bev),258.0,160.313718,0.0
+Chevrolet,BOLT EV,2019,Battery Electric Vehicle (Bev),238.0,147.886298,0.0
+Volvo,XC90,2021,Plug-In Hybrid Electric Vehicle (Phev),18.0,11.184678,0.0
+Toyota,PRIUS PRIME,2019,Plug-In Hybrid Electric Vehicle (Phev),25.0,15.534275000000001,0.0
+Bmw,I3,2020,Plug-In Hybrid Electric Vehicle (Phev),126.0,78.292746,0.0
+Ford,C-MAX,2017,Plug-In Hybrid Electric Vehicle (Phev),20.0,12.42742,0.0
+Kia,NIRO,2021,Plug-In Hybrid Electric Vehicle (Phev),26.0,16.155646,0.0
+Bmw,X5,2017,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Bmw,I3,2019,Plug-In Hybrid Electric Vehicle (Phev),126.0,78.292746,0.0
+Chevrolet,SPARK,2015,Battery Electric Vehicle (Bev),82.0,50.952422,0.0
+Bmw,I3,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Hyundai,IONIQ,2019,Battery Electric Vehicle (Bev),29.0,18.019759,0.0
+Polestar,PS2,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Audi,A7,2021,Plug-In Hybrid Electric Vehicle (Phev),24.0,14.912904000000001,0.0
+Mini,HARDTOP,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Ford,ESCAPE,2021,Plug-In Hybrid Electric Vehicle (Phev),38.0,23.612098,0.0
+Porsche,TAYCAN,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Smart,FORTWO ELECTRIC DRIVE,2013,Battery Electric Vehicle (Bev),68.0,42.253228,0.0
+Volkswagen,E-GOLF,2015,Battery Electric Vehicle (Bev),83.0,51.573793,0.0
+Audi,E-TRON,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Bmw,330E,2021,Plug-In Hybrid Electric Vehicle (Phev),20.0,12.42742,0.0
+Lucid Motors,LUCID AIR,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Chevrolet,SPARK,2014,Battery Electric Vehicle (Bev),82.0,50.952422,0.0
+Mitsubishi,OUTLANDER,2020,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Mini,HARDTOP,2021,Battery Electric Vehicle (Bev),110.0,68.35081,0.0
+Audi,E-TRON SPORTBACK,2021,Battery Electric Vehicle (Bev),218.0,135.458878,0.0
+Tesla,MODEL S,2012,Battery Electric Vehicle (Bev),265.0,164.663315,59900.0
+Tesla,MODEL S,2013,Battery Electric Vehicle (Bev),208.0,129.245168,69900.0
+Tesla,MODEL S,2020,Battery Electric Vehicle (Bev),330.0,205.05243000000002,0.0
+Tesla,MODEL X,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Audi,E-TRON,2021,Battery Electric Vehicle (Bev),222.0,137.944362,0.0
+Volkswagen,E-GOLF,2017,Battery Electric Vehicle (Bev),125.0,77.671375,0.0
+Volvo,XC60,2019,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,52900.0
+Honda,CLARITY,2020,Plug-In Hybrid Electric Vehicle (Phev),47.0,29.204437,0.0
+Audi,Q5,2022,Plug-In Hybrid Electric Vehicle (Phev),23.0,14.291533,0.0
+Bmw,X5,2021,Plug-In Hybrid Electric Vehicle (Phev),30.0,18.64113,0.0
+Ford,C-MAX,2016,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Ford,FUSION,2013,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Chevrolet,VOLT,2015,Plug-In Hybrid Electric Vehicle (Phev),38.0,23.612098,0.0
+Porsche,CAYENNE,2018,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Chrysler,PACIFICA,2021,Plug-In Hybrid Electric Vehicle (Phev),32.0,19.883872,0.0
+Toyota,RAV4,2014,Battery Electric Vehicle (Bev),103.0,64.001213,0.0
+Porsche,CAYENNE,2017,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Lincoln,AVIATOR,2021,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Ford,C-MAX,2015,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Toyota,PRIUS PLUG-IN,2014,Plug-In Hybrid Electric Vehicle (Phev),6.0,3.7282260000000003,0.0
+Audi,E-TRON GT,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Tesla,MODEL S,2019,Battery Electric Vehicle (Bev),270.0,167.77017,0.0
+Volvo,XC60,2021,Plug-In Hybrid Electric Vehicle (Phev),18.0,11.184678,0.0
+Toyota,RAV4,2012,Battery Electric Vehicle (Bev),103.0,64.001213,0.0
+Rivian,EDV,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Audi,E-TRON SPORTBACK,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Chevrolet,VOLT,2011,Plug-In Hybrid Electric Vehicle (Phev),35.0,21.747985,0.0
+Fiat,500,2018,Battery Electric Vehicle (Bev),84.0,52.195164,0.0
+Bmw,IX,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Smart,FORTWO,2017,Battery Electric Vehicle (Bev),58.0,36.039518,0.0
+Chrysler,PACIFICA,2017,Plug-In Hybrid Electric Vehicle (Phev),33.0,20.505243,0.0
+Jaguar,I-PACE,2019,Battery Electric Vehicle (Bev),234.0,145.400814,0.0
+Chrysler,PACIFICA,2018,Plug-In Hybrid Electric Vehicle (Phev),33.0,20.505243,0.0
+Bmw,530E,2018,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,54950.0
+Chevrolet,VOLT,2019,Plug-In Hybrid Electric Vehicle (Phev),53.0,32.932663,0.0
+Tesla,MODEL 3,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Bmw,330E,2022,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Hyundai,SANTA FE,2022,Plug-In Hybrid Electric Vehicle (Phev),31.0,19.262501,0.0
+Volvo,XC60,2018,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,52900.0
+Toyota,PRIUS PLUG-IN,2015,Plug-In Hybrid Electric Vehicle (Phev),6.0,3.7282260000000003,0.0
+Chevrolet,VOLT,2012,Plug-In Hybrid Electric Vehicle (Phev),35.0,21.747985,0.0
+Mercedes-Benz,B-CLASS,2017,Battery Electric Vehicle (Bev),87.0,54.059277,0.0
+Fisker,KARMA,2012,Plug-In Hybrid Electric Vehicle (Phev),33.0,20.505243,102000.0
+Volvo,XC90,2022,Plug-In Hybrid Electric Vehicle (Phev),35.0,21.747985,0.0
+Bmw,I4,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Audi,Q5 E,2021,Plug-In Hybrid Electric Vehicle (Phev),18.0,11.184678,0.0
+Fiat,500,2017,Battery Electric Vehicle (Bev),84.0,52.195164,0.0
+Mercedes-Benz,B-CLASS,2014,Battery Electric Vehicle (Bev),87.0,54.059277,0.0
+Volvo,XC90,2016,Plug-In Hybrid Electric Vehicle (Phev),13.0,8.077823,0.0
+Bmw,I3,2015,Plug-In Hybrid Electric Vehicle (Phev),72.0,44.738712,0.0
+Bmw,X5,2018,Plug-In Hybrid Electric Vehicle (Phev),13.0,8.077823,0.0
+Bmw,330E,2018,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,45600.0
+Toyota,PRIUS PRIME,2022,Plug-In Hybrid Electric Vehicle (Phev),25.0,15.534275000000001,0.0
+Mini,HARDTOP,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Polestar,PS2,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Honda,CLARITY,2019,Plug-In Hybrid Electric Vehicle (Phev),47.0,29.204437,0.0
+Hyundai,KONA,2019,Battery Electric Vehicle (Bev),258.0,160.313718,0.0
+Kia,OPTIMA,2017,Plug-In Hybrid Electric Vehicle (Phev),29.0,18.019759,0.0
+Mercedes-Benz,GLC-CLASS,2019,Plug-In Hybrid Electric Vehicle (Phev),10.0,6.21371,0.0
+Bmw,X3,2020,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Audi,Q4,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Audi,E-TRON,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Chevrolet,SPARK,2016,Battery Electric Vehicle (Bev),82.0,50.952422,0.0
+Mercedes-Benz,GLC-CLASS,2020,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Ford,ESCAPE,2022,Plug-In Hybrid Electric Vehicle (Phev),38.0,23.612098,0.0
+Jaguar,I-PACE,2020,Battery Electric Vehicle (Bev),234.0,145.400814,0.0
+Hyundai,SONATA,2016,Plug-In Hybrid Electric Vehicle (Phev),27.0,16.777017,0.0
+Chevrolet,BOLT EV,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Smart,EQ FORTWO,2019,Battery Electric Vehicle (Bev),58.0,36.039518,0.0
+Ford,FOCUS,2013,Battery Electric Vehicle (Bev),76.0,47.224196,0.0
+Land Rover,RANGE ROVER SPORT,2021,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Kia,NIRO,2018,Plug-In Hybrid Electric Vehicle (Phev),26.0,16.155646,0.0
+Porsche,TAYCAN,2021,Battery Electric Vehicle (Bev),203.0,126.138313,0.0
+Ford,TRANSIT,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Smart,EQ FORTWO,2018,Battery Electric Vehicle (Bev),58.0,36.039518,0.0
+Land Rover,RANGE ROVER SPORT,2020,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Porsche,PANAMERA,2015,Plug-In Hybrid Electric Vehicle (Phev),15.0,9.320565,0.0
+Hyundai,IONIQ,2021,Plug-In Hybrid Electric Vehicle (Phev),29.0,18.019759,0.0
+Volvo,XC90,2018,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,64950.0
+Ford,FUSION,2020,Plug-In Hybrid Electric Vehicle (Phev),26.0,16.155646,0.0
+Mercedes-Benz,B-CLASS,2015,Battery Electric Vehicle (Bev),87.0,54.059277,0.0
+Lincoln,AVIATOR,2020,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Tesla,MODEL X,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Porsche,CAYENNE,2022,Plug-In Hybrid Electric Vehicle (Phev),16.0,9.941936,0.0
+Volvo,XC90,2019,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Ford,FOCUS,2012,Battery Electric Vehicle (Bev),76.0,47.224196,0.0
+Lincoln,AVIATOR,2022,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Bmw,I8,2015,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Chevrolet,BOLT EUV,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Hyundai,IONIQ 5,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Volvo,XC60,2020,Plug-In Hybrid Electric Vehicle (Phev),18.0,11.184678,0.0
+Lincoln,CORSAIR,2022,Plug-In Hybrid Electric Vehicle (Phev),28.0,17.398388,0.0
+Cadillac,ELR,2016,Plug-In Hybrid Electric Vehicle (Phev),40.0,24.85484,0.0
+Kia,OPTIMA,2018,Plug-In Hybrid Electric Vehicle (Phev),29.0,18.019759,0.0
+Bmw,I8,2017,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Mercedes-Benz,GLE-CLASS,2018,Plug-In Hybrid Electric Vehicle (Phev),8.0,4.970968,0.0
+Toyota,RAV4,2013,Battery Electric Vehicle (Bev),103.0,64.001213,0.0
+Hyundai,KONA ELECTRIC,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Smart,FORTWO,2016,Battery Electric Vehicle (Bev),68.0,42.253228,0.0
+Porsche,PANAMERA,2018,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,184400.0
+Audi,E-TRON SPORTBACK,2020,Battery Electric Vehicle (Bev),218.0,135.458878,0.0
+Volvo,V60,2021,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Cadillac,ELR,2014,Plug-In Hybrid Electric Vehicle (Phev),37.0,22.990727,0.0
+Volvo,XC90,2017,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Mercedes-Benz,EQS-CLASS SEDAN,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Ford,FOCUS,2014,Battery Electric Vehicle (Bev),76.0,47.224196,0.0
+Smart,FORTWO ELECTRIC DRIVE,2014,Battery Electric Vehicle (Bev),58.0,36.039518,0.0
+Ford,FOCUS,2015,Battery Electric Vehicle (Bev),76.0,47.224196,0.0
+Rivian,R1S,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Mitsubishi,I-MIEV,2014,Battery Electric Vehicle (Bev),62.0,38.525002,0.0
+Volvo,XC90,2020,Plug-In Hybrid Electric Vehicle (Phev),18.0,11.184678,0.0
+Lexus,NX,2022,Plug-In Hybrid Electric Vehicle (Phev),37.0,22.990727,0.0
+Bmw,740E,2018,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,90700.0
+Mini,COUNTRYMAN,2020,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Volvo,S60,2020,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Porsche,CAYENNE,2015,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Kia,SPORTAGE,2023,Plug-In Hybrid Electric Vehicle (Phev),34.0,21.126614,0.0
+Mercedes-Benz,C-CLASS,2017,Plug-In Hybrid Electric Vehicle (Phev),8.0,4.970968,0.0
+Mercedes-Benz,C-CLASS,2018,Plug-In Hybrid Electric Vehicle (Phev),8.0,4.970968,0.0
+Polestar,PS2,2021,Battery Electric Vehicle (Bev),233.0,144.77944300000001,0.0
+Kia,SOUL,2015,Battery Electric Vehicle (Bev),93.0,57.787503,0.0
+Bmw,I4,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Volkswagen,ID.4,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Volvo,V60,2020,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Bmw,530E,2022,Plug-In Hybrid Electric Vehicle (Phev),18.0,11.184678,0.0
+Hyundai,SONATA,2017,Plug-In Hybrid Electric Vehicle (Phev),27.0,16.777017,0.0
+Mercedes-Benz,GLC-CLASS,2018,Plug-In Hybrid Electric Vehicle (Phev),9.0,5.592339,0.0
+Porsche,PANAMERA,2014,Plug-In Hybrid Electric Vehicle (Phev),15.0,9.320565,0.0
+Hyundai,IONIQ,2022,Plug-In Hybrid Electric Vehicle (Phev),29.0,18.019759,0.0
+Porsche,PANAMERA,2019,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Mercedes-Benz,B-CLASS,2016,Battery Electric Vehicle (Bev),87.0,54.059277,0.0
+Mini,COUNTRYMAN,2018,Plug-In Hybrid Electric Vehicle (Phev),12.0,7.4564520000000005,36800.0
+Ford,FOCUS,2016,Battery Electric Vehicle (Bev),76.0,47.224196,0.0
+Hyundai,IONIQ,2017,Battery Electric Vehicle (Bev),124.0,77.050004,0.0
+Jaguar,I-PACE,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Bmw,IX,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Porsche,CAYENNE,2020,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,81100.0
+Mitsubishi,OUTLANDER,2022,Plug-In Hybrid Electric Vehicle (Phev),24.0,14.912904000000001,0.0
+Mercedes-Benz,S-CLASS,2016,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Cadillac,CT6,2017,Plug-In Hybrid Electric Vehicle (Phev),31.0,19.262501,75095.0
+Th!Nk,CITY,2011,Battery Electric Vehicle (Bev),100.0,62.137100000000004,0.0
+Mini,COUNTRYMAN,2022,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Porsche,CAYENNE,2016,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Volvo,S90,2019,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Mercedes-Benz,GLE-CLASS,2017,Plug-In Hybrid Electric Vehicle (Phev),10.0,6.21371,0.0
+Mitsubishi,I-MIEV,2012,Battery Electric Vehicle (Bev),62.0,38.525002,0.0
+Volvo,V60,2022,Plug-In Hybrid Electric Vehicle (Phev),41.0,25.476211,0.0
+Hyundai,TUCSON,2022,Plug-In Hybrid Electric Vehicle (Phev),33.0,20.505243,0.0
+Mitsubishi,I-MIEV,2016,Battery Electric Vehicle (Bev),62.0,38.525002,0.0
+Honda,CLARITY,2021,Plug-In Hybrid Electric Vehicle (Phev),47.0,29.204437,0.0
+Genesis,GV60,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Bmw,530E,2021,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Mercedes-Benz,EQS-CLASS SUV,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Porsche,PANAMERA,2021,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Mercedes-Benz,GLE-CLASS,2016,Plug-In Hybrid Electric Vehicle (Phev),10.0,6.21371,0.0
+Bmw,I8,2014,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Audi,A8 E,2020,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Mini,COUNTRYMAN,2021,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Volvo,S90,2018,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Bmw,740E,2019,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,91250.0
+Tesla,ROADSTER,2011,Battery Electric Vehicle (Bev),245.0,152.235895,109000.0
+Land Rover,RANGE ROVER,2021,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Volvo,S90,2020,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Ford,FOCUS,2017,Battery Electric Vehicle (Bev),100.0,62.137100000000004,0.0
+Bmw,I8,2016,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Volvo,nan,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Audi,RS E-TRON GT,2022,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Tesla,ROADSTER,2008,Battery Electric Vehicle (Bev),220.0,136.70162,98950.0
+Ford,RANGER,2000,Battery Electric Vehicle (Bev),58.0,36.039518,0.0
+Fiat,500,2019,Battery Electric Vehicle (Bev),84.0,52.195164,0.0
+Hyundai,IONIQ,2018,Plug-In Hybrid Electric Vehicle (Phev),29.0,18.019759,0.0
+Hyundai,SONATA,2019,Plug-In Hybrid Electric Vehicle (Phev),28.0,17.398388,0.0
+Porsche,PANAMERA,2022,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Porsche,PANAMERA,2016,Plug-In Hybrid Electric Vehicle (Phev),15.0,9.320565,0.0
+Bentley,BENTAYGA,2020,Plug-In Hybrid Electric Vehicle (Phev),18.0,11.184678,0.0
+Ford,FOCUS,2018,Battery Electric Vehicle (Bev),100.0,62.137100000000004,0.0
+Mitsubishi,OUTLANDER,2021,Plug-In Hybrid Electric Vehicle (Phev),24.0,14.912904000000001,0.0
+Mercedes-Benz,S-CLASS,2017,Plug-In Hybrid Electric Vehicle (Phev),12.0,7.4564520000000005,0.0
+Bmw,740E,2017,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,89100.0
+Bmw,745E,2020,Plug-In Hybrid Electric Vehicle (Phev),16.0,9.941936,0.0
+Bmw,I8,2019,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Volvo,S60,2019,Plug-In Hybrid Electric Vehicle (Phev),22.0,13.670162,0.0
+Azure Dynamics,TRANSIT CONNECT ELECTRIC,2011,Battery Electric Vehicle (Bev),56.0,34.796776,0.0
+Kia,OPTIMA,2020,Plug-In Hybrid Electric Vehicle (Phev),28.0,17.398388,0.0
+Jaguar,I-PACE,2021,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Lincoln,AVIATOR,2023,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Honda,ACCORD,2014,Plug-In Hybrid Electric Vehicle (Phev),13.0,8.077823,0.0
+Porsche,PANAMERA,2020,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Land Rover,RANGE ROVER,2020,Plug-In Hybrid Electric Vehicle (Phev),19.0,11.806049,0.0
+Chevrolet,S-10 PICKUP,1997,Battery Electric Vehicle (Bev),39.0,24.233469,0.0
+Kia,EV6,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Lincoln,CORSAIR,2021,Plug-In Hybrid Electric Vehicle (Phev),28.0,17.398388,0.0
+Mini,COUNTRYMAN,2023,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Azure Dynamics,TRANSIT CONNECT ELECTRIC,2012,Battery Electric Vehicle (Bev),56.0,34.796776,0.0
+Subaru,SOLTERRA,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Genesis,G80,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Ford,RANGER,1999,Battery Electric Vehicle (Bev),74.0,45.981454,0.0
+Mercedes-Benz,S-CLASS,2015,Plug-In Hybrid Electric Vehicle (Phev),14.0,8.699194,0.0
+Bentley,BENTAYGA,2021,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Kia,SOUL EV,2019,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Kia,SOUL EV,2020,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Kia,OPTIMA,2019,Plug-In Hybrid Electric Vehicle (Phev),29.0,18.019759,0.0
+Mercedes-Benz,C-CLASS,2016,Plug-In Hybrid Electric Vehicle (Phev),11.0,6.835081,0.0
+Porsche,918,2015,Plug-In Hybrid Electric Vehicle (Phev),12.0,7.4564520000000005,845000.0
+Ford,RANGER,1998,Battery Electric Vehicle (Bev),58.0,36.039518,0.0
+Mitsubishi,I-MIEV,2017,Battery Electric Vehicle (Bev),59.0,36.660889,0.0
+Bentley,FLYING SPUR,2022,Plug-In Hybrid Electric Vehicle (Phev),21.0,13.048791,0.0
+Bmw,530E,2020,Plug-In Hybrid Electric Vehicle (Phev),20.0,12.42742,0.0
+Ford,TRANSIT,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Volvo,XC40,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
+Toyota,RAV4,2002,Battery Electric Vehicle (Bev),95.0,59.030245,0.0
+Bmw,745LE,2022,Plug-In Hybrid Electric Vehicle (Phev),16.0,9.941936,0.0
+Bmw,I8,2020,Plug-In Hybrid Electric Vehicle (Phev),17.0,10.563307,0.0
+Ford,F-150,2023,Battery Electric Vehicle (Bev),0.0,0.0,0.0
