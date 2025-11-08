@@ -4,6 +4,7 @@ Problem Statement
 With the rapid growth of the electric vehicle (EV) industry, analyzing and forecasting car performance, specifications, and market trends has become crucial for manufacturers, analysts, and consumers. However, raw datasets like Electric_Vehicle_Population_Data.csv and detailed_ev_charging_stations.csv often contain inconsistent, unstructured, or incomplete information — making it difficult to extract insights or predict future trends effectively.
 
 This project focuses on combining AI-powered chat interactions with data analytics and visualization to better understand and communicate EV market patterns.
+This project helps to understand and predict Electric Vehicle performance and price trends using data analysis and machine learning through an easy-to-use web app.
 
 📋 Project Overview
 
