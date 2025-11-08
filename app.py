@@ -319,3 +319,368 @@ try:
     files.download(stations_clean_path)
 except Exception:
     print("Not in Colab or download not supported in this environment.")
+
+
+
+
+#Week 2(Model Training)
+
+# ======= Extended Week-2 Training: Battery SoH, EcoScore, Maintenance, Forecast, Charging Cost =======
+# Paste into Google Colab and run.
+
+# 0) Install dependencies
+!pip install -q scikit-learn joblib pandas numpy prophet
+
+# 1) Imports
+import os, joblib, json, math, warnings
+import pandas as pd, numpy as np
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+warnings.filterwarnings("ignore")
+OUT_DIR = "models_extended"
+os.makedirs(OUT_DIR, exist_ok=True)
+RANDOM_STATE = 42
+
+print("Setup done. Models will be saved to:", OUT_DIR)
+
+# 2) Load cleaned EV CSV (upload if missing)
+DATA_FILENAME = "Electric_Vehicle_Population_Data_cleaned.csv"
+if not os.path.exists(DATA_FILENAME):
+    from google.colab import files
+    print(f"Please upload {DATA_FILENAME}")
+    uploaded = files.upload()
+if not os.path.exists(DATA_FILENAME):
+    raise FileNotFoundError(f"{DATA_FILENAME} not found. Place it in working dir or upload via Colab UI.")
+df = pd.read_csv(DATA_FILENAME, low_memory=False)
+print("Loaded", DATA_FILENAME, "shape:", df.shape)
+display(df.head(3))
+
+# 3) Helpers: canonicalize + numeric safe parser
+def canonicalize_columns(df):
+    df = df.copy()
+    df.columns = [str(c).strip().lower().replace(' ', '_').replace('-', '_').replace('/','_').replace('.','') for c in df.columns]
+    return df
+
+def to_numeric_safely(v):
+    try:
+        if pd.isna(v): return np.nan
+        s = str(v).replace(',','').replace('₹','').replace('$','').strip()
+        import re
+        s = re.sub(r'[^d\u002e\u002d]', '', s)
+        return float(s) if s not in ('', '.', '-') else np.nan
+    except:
+        return np.nan
+
+df = canonicalize_columns(df)
+
+# 4) Create or detect features commonly used
+# Ensure key derived features exist: model_year -> vehicle_age
+if 'model_year' in df.columns:
+    df['model_year'] = pd.to_numeric(df['model_year'], errors='coerce')
+    df['vehicle_age'] = 2025 - df['model_year']
+else:
+    if 'vehicle_age' not in df.columns:
+        df['vehicle_age'] = np.nan
+
+# Numeric features candidates (you can expand)
+NUMERIC_CANDIDATES = [c for c in ['battery_kwh','electric_range_km','efficiency','top_speed','accel_0_100','vehicle_age','number_of_seats'] if c in df.columns]
+CATEGORICAL_CANDIDATES = [c for c in ['make','vehicle_type','fuel_type','model'] if c in df.columns]
+
+print("Numeric features available:", NUMERIC_CANDIDATES)
+print("Categorical features available:", CATEGORICAL_CANDIDATES)
+
+# 5) Prepare small helper to encode categorical features (LabelEncoder)
+def encode_categorical(df_sub, cat_cols):
+    encoders = {}
+    X_cat = pd.DataFrame(index=df_sub.index)
+    for c in cat_cols:
+        le = LabelEncoder()
+        vals = df_sub[c].astype(str).fillna('nan')
+        X_cat[c] = le.fit_transform(vals)
+        encoders[c] = le
+    return X_cat, encoders
+
+# 6) Function to train a regression model and save artifacts
+def train_regression(target_col, df, numeric_feats, cat_feats, out_dir=OUT_DIR, run_tuning=False):
+    print("\n>>> Training target:", target_col)
+    # If target not present, raise
+    if target_col not in df.columns:
+        raise ValueError(f"Target {target_col} not in dataframe.")
+    # Drop rows without target
+    dfm = df.dropna(subset=[target_col]).copy()
+    print("Rows available:", dfm.shape[0])
+    if dfm.shape[0] < 30:
+        print("Warning: fewer than 30 rows for this target — results may be unreliable.")
+    # Numeric matrix
+    X_num = dfm[numeric_feats].copy() if numeric_feats else pd.DataFrame(index=dfm.index)
+    if not X_num.empty:
+        X_num = X_num.applymap(lambda v: to_numeric_safely(v))
+        X_num = X_num.astype(float)
+        X_num = X_num.fillna(X_num.median())
+    # Categorical encode
+    X_cat, encs = encode_categorical(dfm, cat_feats) if cat_feats else (pd.DataFrame(index=dfm.index), {})
+    if not X_num.empty and not X_cat.empty:
+        X = pd.concat([X_num, X_cat], axis=1)
+    elif not X_num.empty:
+        X = X_num.copy()
+    elif not X_cat.empty:
+        X = X_cat.copy()
+    else:
+        raise ValueError("No features to train on.")
+    y = dfm[target_col].astype(float)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE)
+    scaler = StandardScaler()
+    X_train_s = scaler.fit_transform(X_train)
+    X_test_s = scaler.transform(X_test)
+    model = RandomForestRegressor(n_estimators=150, random_state=RANDOM_STATE, n_jobs=-1)
+    model.fit(X_train_s, y_train)
+    # Evaluate
+    y_pred = model.predict(X_test_s)
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse) # Corrected: Calculate RMSE from MSE
+    r2 = r2_score(y_test, y_pred)
+    print(f"Results for {target_col}: R2={r2:.4f}, MAE={mae:.4f}, RMSE={rmse:.4f}")
+    # Save artifacts
+    joblib.dump(model, os.path.join(out_dir, f"rf_{target_col}.pkl"))
+    joblib.dump(scaler, os.path.join(out_dir, f"scaler_{target_col}.pkl"))
+    joblib.dump(encs, os.path.join(out_dir, f"encoders_{target_col}.pkl"))
+    with open(os.path.join(out_dir, f"meta_{target_col}.json"), "w") as f:
+        json.dump({"target": target_col, "numeric_feats": numeric_feats, "cat_feats": cat_feats}, f, indent=2)
+    # Feature importances
+    feat_names = X.columns.tolist()
+    imp = model.feature_importances_
+    fi = sorted(zip(feat_names, imp), key=lambda x: x[1], reverse=True)
+    print("Top features:", fi[:6])
+    # Example prediction using median row
+    example = X.median().to_frame().T.fillna(0)
+    try:
+        xp = scaler.transform(example)
+        ex_pred = float(model.predict(xp)[0])
+    except:
+        ex_pred = None
+    return {"model": model, "scaler": scaler, "encoders": encs, "metrics": {"r2": r2, "mae": mae, "rmse": rmse}, "example_pred": ex_pred}
+
+# ----------------------------------------------------------------
+# 7) BATTERY HEALTH ESTIMATOR
+# If 'battery_soh' exists, use it; otherwise create a heuristic proxy and train on it.
+if 'battery_soh' in df.columns:
+    print("\nBattery SoH labels found: training on 'battery_soh'.")
+    battery_target = 'battery_soh'
+    # numeric + cat features to use
+    numeric_feats = [f for f in ['battery_kwh','electric_range_km','vehicle_age','efficiency'] if f in df.columns]
+    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in df.columns]
+    res_batt = train_regression(battery_target, df, numeric_feats, cat_feats)
+else:
+    # create proxy SoH using heuristic:
+    # Soh = max(30, 100 - (vehicle_age * 0.9) - (fast_charge_penalty) - temp_penalty)
+    # if no fast_charge info, assume 0 or infer from charger_count column names
+    print("\nNo 'battery_soh' in dataset. Creating heuristic proxy SoH and training on it.")
+    df_proxy = df.copy()
+    # attempt to find fast charge frequency columns or station usage proxies (best-effort)
+    fastc = None
+    for c in df_proxy.columns:
+        if 'fast' in c and 'charge' in c:
+            fastc = c; break
+    if fastc is None:
+        # no column — assume 0 fast charges (proxy)
+        df_proxy['fast_charges_per_week'] = 0.0
+    else:
+        df_proxy['fast_charges_per_week'] = pd.to_numeric(df_proxy[fastc], errors='coerce').fillna(0)
+    # temperature proxy not available -> assume 25°C ambient
+    df_proxy['ambient_temp_c'] = df_proxy.get('ambient_temp_c', 25.0)
+    # compute heuristic SoH
+    df_proxy['battery_soh_proxy'] = df_proxy.apply(lambda r:
+        max(20.0, 100.0 - ( (r.get('vehicle_age',0) if not pd.isna(r.get('vehicle_age',np.nan)) else 0)*0.9 )
+            - min(5.0, 0.5 * r.get('fast_charges_per_week',0))
+            - max(0, (r.get('ambient_temp_c',25.0)-25.0)*0.05)
+        ), axis=1)
+    # train model to predict battery_soh_proxy
+    battery_target = 'battery_soh_proxy'
+    numeric_feats = [f for f in ['battery_kwh','electric_range_km','vehicle_age','efficiency','fast_charges_per_week','ambient_temp_c'] if f in df_proxy.columns]
+    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in df_proxy.columns]
+    res_batt = train_regression(battery_target, df_proxy, numeric_feats, cat_feats)
+
+# ----------------------------------------------------------------
+# 8) ECOSCORE (formula + optional ML)
+# Compute EcoScore for all rows as a normalized composite and train a model to predict it (if desired)
+print("\nComputing EcoScore (formulaic) and training model to predict it.")
+df_ec = df.copy()
+# require range and efficiency to compute meaningful score
+if 'electric_range_km' in df_ec.columns and 'efficiency' in df_ec.columns:
+    # formula: raw = (range / efficiency) * 10 ; age penalty
+    df_ec['eco_raw'] = (df_ec['electric_range_km'].astype(float).fillna(0) / df_ec['efficiency'].astype(float).replace(0, np.nan).fillna(df_ec['efficiency'].median()))
+    df_ec['eco_raw'] = df_ec['eco_raw'] * 10.0
+    df_ec['eco_age_penalty'] = df_ec.get('vehicle_age',0) * 1.5
+    df_ec['eco_score'] = (df_ec['eco_raw'] - df_ec['eco_age_penalty']).clip(lower=0)
+    # scale 0-100 roughly
+    maxv = df_ec['eco_score'].quantile(0.98) if df_ec['eco_score'].notna().any() else 100.0
+    df_ec['eco_score_norm'] = (df_ec['eco_score'] / (maxv+1e-9) * 100).clip(0,100)
+    # train regressor to predict eco_score_norm
+    eco_target = 'eco_score_norm'
+    numeric_feats = [f for f in ['battery_kwh','electric_range_km','efficiency','vehicle_age'] if f in df_ec.columns]
+    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in df_ec.columns]
+    res_eco = train_regression(eco_target, df_ec, numeric_feats, cat_feats)
+else:
+    print("Not enough columns (range, efficiency) to compute EcoScore. Skipping Eco model.")
+    res_eco = None
+
+# ----------------------------------------------------------------
+# 9) MAINTENANCE COST PREDICTOR
+# If 'maintenance_cost' exists, train on it; else create heuristic target and train.
+if 'maintenance_cost' in df.columns or 'expected_service_cost' in df.columns:
+    maint_col = 'maintenance_cost' if 'maintenance_cost' in df.columns else 'expected_service_cost'
+    print("\nFound maintenance cost label:", maint_col, "-> training.")
+    numeric_feats = [f for f in ['vehicle_age','battery_kwh','electric_range_km','battery_soh'] if f in df.columns]
+    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in df.columns]
+    res_maint = train_regression(maint_col, df, numeric_feats, cat_feats)
+else:
+    print("\nNo maintenance cost labels found. Creating heuristic maintenance target and training.")
+    dfm = df.copy()
+    # if battery_soh previously computed either real or proxy
+    if 'battery_soh' in dfm.columns:
+        soh_col = 'battery_soh'
+    elif 'battery_soh_proxy' in dfm.columns:
+        soh_col = 'battery_soh_proxy'
+    else:
+        soh_col = None
+    # heuristic: base + age factor + battery penalty
+    def compute_maint(row):
+        age = row.get('vehicle_age', 3) if not pd.isna(row.get('vehicle_age', np.nan)) else 3
+        battery_pen = 0
+        if soh_col and soh_col in row.index and not pd.isna(row[soh_col]):
+            battery_pen = (100 - row[soh_col]) * 50.0
+        return 2000 + age * 500 + battery_pen
+    dfm['maintenance_cost_proxy'] = dfm.apply(compute_maint, axis=1)
+    maint_target = 'maintenance_cost_proxy'
+    numeric_feats = [f for f in ['vehicle_age','battery_kwh','electric_range_km'] if f in dfm.columns]
+    if soh_col: numeric_feats.append(soh_col)
+    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in dfm.columns]
+    res_maint = train_regression(maint_target, dfm, numeric_feats, cat_feats)
+
+# ----------------------------------------------------------------
+# 10) MARKET FORECAST
+# If dataset has a date column (registration_date or similar), aggregate monthly and forecast with Prophet if available.
+print("\nMarket Forecast: looking for date/time column to aggregate monthly registrations.")
+date_col = None
+for c in df.columns:
+    if 'date' in c or 'time' in c or 'month' in c:
+        date_col = c; break
+
+if date_col:
+    print("Found date-like column:", date_col)
+    df_dates = df[[date_col]].copy()
+    df_dates['ds'] = pd.to_datetime(df_dates[date_col], errors='coerce')
+    df_dates = df_dates.dropna(subset=['ds'])
+    if df_dates.shape[0] < 12:
+        print("Too few date rows (less than 12) — producing simple year-count projection")
+        # fall back: counts by model_year
+        if 'model_year' in df.columns:
+            counts = df['model_year'].value_counts().sort_index()
+            Xy = counts.reset_index().rename(columns={'model_year':'year'})
+            # linear regression on year->count
+            lr = LinearRegression()
+            X = Xy[['year']].astype(float)
+            y = Xy['count'].astype(float)
+            lr.fit(X, y)
+            next_year = int(X['year'].max()) + 1
+            pred_next = lr.predict([[next_year]])[0]
+            print(f"Projected count next year ({next_year}): {int(pred_next)}")
+            joblib.dump(lr, os.path.join(OUT_DIR, "market_lr_year_count.pkl"))
+        else:
+            print("No model_year to project from.")
+    else:
+        # aggregate monthly
+        df_dates['month'] = df_dates['ds'].dt.to_period('M').dt.to_timestamp()
+        monthly = df_dates.groupby('month').size().reset_index(name='count')
+        monthly = monthly.sort_values('month')
+        print("Monthly series length:", len(monthly))
+        # try Prophet
+        try:
+            from prophet import Prophet
+            m = Prophet(yearly_seasonality=True)
+            mp = monthly.rename(columns={'month':'ds','count':'y'})
+            m.fit(mp)
+            future = m.make_future_dataframe(periods=12, freq='M')
+            fc = m.predict(future)
+            fc_tail = fc[['ds','yhat']].tail(12)
+            display(fc_tail)
+            joblib.dump(m, os.path.join(OUT_DIR, "market_prophet.pkl"))
+            print("Prophet model saved.")
+        except Exception as e:
+            print("Prophet not available or failed:", e)
+            # simple moving-average forecast
+            vals = monthly['count'].values
+            ma6 = float(vals[-6:].mean()) if len(vals) >= 6 else float(vals.mean())
+            preds = [int(ma6*(1+0.02*i)) for i in range(12)]
+            print("Simple MA-based 12-month forecast (approx):", preds)
+            joblib.dump(preds, os.path.join(OUT_DIR, "market_ma_preds.pkl"))
+else:
+    print("No date-like column found. Using model_year counts to produce a simple projection (if available).")
+    if 'model_year' in df.columns:
+        counts = df['model_year'].value_counts().sort_index()
+        Xy = counts.reset_index().rename(columns={'model_year':'year'})
+        lr = LinearRegression()
+        X = Xy[['year']].astype(float)
+        y = Xy['count'].astype(float)
+        lr.fit(X, y)
+        next_year = int(X['year'].max()) + 1
+        pred_next = lr.predict([[next_year]])[0]
+        print(f"Projected models (count) next year ({next_year}): {int(pred_next)}")
+        joblib.dump(lr, os.path.join(OUT_DIR, "market_lr_year_count.pkl"))
+    else:
+        print("No model_year or date info to forecast market. Skipping forecast.")
+
+# ----------------------------------------------------------------
+# 11) CHARGING SESSION COST & OPERATOR PRICE SUGGESTION
+# Use stations CSV if available to compute cost per session or recommend operator price.
+STATIONS_FILE = "detailed_ev_charging_stations_cleaned.csv"
+if os.path.exists(STATIONS_FILE):
+    stn = pd.read_csv(STATIONS_FILE)
+    stn = stn.rename(columns={c:c.strip().lower().replace(' ', '_') for c in stn.columns})
+    # find cost column
+    cost_col = next((c for c in stn.columns if 'cost' in c and 'kwh' in c), None)
+    cap_col = next((c for c in stn.columns if 'kw' in c or 'capacity' in c), None)
+    if cost_col:
+        stn['cost_usd_per_kwh'] = stn[cost_col].apply(to_numeric_safely)
+    if cap_col:
+        stn['charging_capacity_kw'] = stn[cap_col].apply(to_numeric_safely)
+    # simple function for session cost
+    def session_cost(kwh_needed, cost_per_kwh):
+        return kwh_needed * cost_per_kwh
+    # example: compute session cost for median station and 50%->80% charge of battery_kwh median
+    median_batt = df['battery_kwh'].median() if 'battery_kwh' in df.columns else 50.0
+    kwh_needed = median_batt * 0.6  # example 60% of battery
+    if cost_col:
+        median_cost = stn['cost_usd_per_kwh'].median(skipna=True)
+        est_session_cost = session_cost(kwh_needed, median_cost)
+        print("\nEstimated session cost (median station) for ~60% charge of median battery: ", est_session_cost, "USD")
+        # suggest operator price with markup
+        suggested_price = median_cost * 1.2  # 20% markup
+        print("Suggested operator price per kWh (20% margin):", suggested_price, "USD/kWh")
+    else:
+        print("No cost per kWh found in stations file; cannot estimate session cost.")
+else:
+    print("\nNo stations cleaned CSV found in working directory. If you want session cost calculations, place 'detailed_ev_charging_stations_cleaned.csv' here.")
+
+# ----------------------------------------------------------------
+# 12) Summary of saved artifacts
+print("\nSaved files in", OUT_DIR, ":")
+print(os.listdir(OUT_DIR))
+# Save a JSON summary of training metrics if available
+summary = {}
+if 'res_batt' in locals() and isinstance(res_batt, dict) and res_batt.get("metrics"):
+    summary['battery'] = res_batt['metrics']
+if 'res_eco' in locals() and isinstance(res_eco, dict) and res_eco.get("metrics"):
+    summary['eco'] = res_eco['metrics']
+if 'res_maint' in locals() and isinstance(res_maint, dict) and res_maint.get("metrics"):
+    summary['maintenance'] = res_maint['metrics']
+with open(os.path.join(OUT_DIR, "training_summary_extended.json"), "w") as f:
+    json.dump(summary, f, indent=2)
+print("Saved training_summary_extended.json")
+
+
