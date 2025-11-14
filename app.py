@@ -1,686 +1,456 @@
-# Cell 1: imports
+# app.py
+import streamlit as st
 import pandas as pd
 import numpy as np
-import io
-import os
-from datetime import datetime
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Configure pandas display
-pd.set_option('display.max_columns', 200)
-pd.set_option('display.width', 180)
-
-print("Libraries loaded. pandas version:", pd.__version__)
-# Cell 2: Upload CSVs (Colab)
-# If running locally, replace with paths like "/content/Electric_Vehicle_Population_Data.csv"
-try:
-    from google.colab import files
-    print("Please upload these two files when prompted:")
-    print(" - Electric_Vehicle_Population_Data.csv")
-    print(" - detailed_ev_charging_stations.csv")
-    uploaded = files.upload()  # interactively upload files
-    # Save to local filenames
-    for fname in uploaded.keys():
-        with open(fname, 'wb') as f:
-            f.write(uploaded[fname])
-    ev_pop_path = "Electric_Vehicle_Population_Data.csv"
-    stations_path = "detailed_ev_charging_stations.csv"
-except Exception as e:
-    print("No google.colab.files available (not running in Colab).")
-    print("Set file paths manually.")
-    ev_pop_path = "/content/Electric_Vehicle_Population_Data.csv"
-    stations_path = "/content/detailed_ev_charging_stations.csv"
-
-# Quick existence check
-print("EV population path:", ev_pop_path, "exists?", os.path.exists(ev_pop_path))
-print("Charging stations path:", stations_path, "exists?", os.path.exists(stations_path))
-# Cell 3: helper functions for cleaning
-def clean_column_names(df):
-    # lowercase, strip, replace spaces & weird chars with underscores
-    df = df.copy()
-    df.columns = [(
-        str(c).strip()
-              .lower()
-              .replace('%','pct')
-              .replace(' ', '_')
-              .replace('-', '_')
-              .replace('/', '_')
-              .replace('.', '')
-    ) for c in df.columns]
-    return df
-
-def to_numeric_safely(val):
-    try:
-        if pd.isna(val): return np.nan
-        # Remove common non-numeric characters (commas, $ ,₹)
-        s = str(val).replace(',','').replace('$','').replace('₹','').strip()
-        # also remove text like "kW" or " miles"
-        import re
-        s = re.sub(r'[^\d\.\-]', '', s)
-        if s == '' or s == '-' or s == '.': return np.nan
-        return float(s)
-    except Exception:
-        return np.nan
-
-def standardize_datetime_series(s):
-    # Try to parse common date formats, return series of datetimes or NaT
-    return pd.to_datetime(s, errors='coerce', infer_datetime_format=True)
-# Cell 4: load dataframes
-ev = pd.read_csv(ev_pop_path, low_memory=False)
-stations = pd.read_csv(stations_path, low_memory=False)
-
-print("Raw EV population shape:", ev.shape)
-print("Raw stations shape:", stations.shape)
-display(ev.head())
-display(stations.head())
-
-# Clean column names
-ev = clean_column_names(ev)
-stations = clean_column_names(stations)
-
-print("After normalizing column names:")
-print("EV columns:", ev.columns.tolist()[:30])
-print("Stations columns:", stations.columns.tolist()[:30])
-# Cell 5: basic diagnostics
-def diagnostics(df, name="df", max_display=5):
-    print(f"--- {name} diagnostics ---")
-    print("shape:", df.shape)
-    print("missing per column (top 10):")
-    print(df.isna().sum().sort_values(ascending=False).head(10))
-    print("duplicate rows:", df.duplicated().sum())
-    print()
-    
-diagnostics(ev, "EV Population")
-diagnostics(stations, "Charging Stations")
-# Cell 6: Clean charging stations
-s = stations.copy()
-
-# Normalize common fields
-if 'cost_(usd/kwh)' in s.columns:
-    s['cost_usd_per_kwh'] = s['cost_(usd/kwh)'].apply(to_numeric_safely)
-elif 'cost (usd/kwh)' in s.columns:
-    s['cost_usd_per_kwh'] = s['cost (usd/kwh)'].apply(to_numeric_safely)
-else:
-    # try common names
-    possible = [c for c in s.columns if 'cost' in c and 'kwh' in c]
-    if possible:
-        s['cost_usd_per_kwh'] = s[possible[0]].apply(to_numeric_safely)
-
-# Charger type normalization
-if 'charger_type' in s.columns:
-    s['charger_type'] = s['charger_type'].astype(str).str.strip().str.title()
-    # unify common variants
-    s['charger_type'] = s['charger_type'].replace({
-        'Ac Level 2':'AC Level 2','Dc Fast Charger':'DC Fast Charger','Ac Level 1':'AC Level 1',
-        'Level2':'AC Level 2','Level1':'AC Level 1','Fast':'DC Fast Charger'
-    })
-else:
-    # Try to find a column that looks like charger type
-    for c in s.columns:
-        if 'charger' in c:
-            s.rename(columns={c:'charger_type'}, inplace=True)
-            s['charger_type'] = s['charger_type'].astype(str).str.strip().str.title()
-            break
-
-# Numeric capacity
-if 'charging_capacity_(kw)' in s.columns or 'charging_capacity' in s.columns:
-    col = 'charging_capacity_(kw)' if 'charging_capacity_(kw)' in s.columns else 'charging_capacity'
-    s['charging_capacity_kw'] = s[col].apply(to_numeric_safely)
-else:
-    # try guessing
-    for c in s.columns:
-        if 'kw' in c or 'capacity' in c:
-            s['charging_capacity_kw'] = s[c].apply(to_numeric_safely)
-            break
-
-# Parse latitude & longitude
-for latc in ['latitude','lat','station_latitude']:
-    for longc in ['longitude','lon','lng','station_longitude']:
-        if latc in s.columns and longc in s.columns:
-            s['latitude'] = pd.to_numeric(s[latc], errors='coerce')
-            s['longitude'] = pd.to_numeric(s[longc], errors='coerce')
-            break
-    if 'latitude' in s.columns and 'longitude' in s.columns:
-        break
-
-# Availability: normalize to simple categories (24/7, daytime, night, scheduled)
-if 'availability' in s.columns:
-    s['availability_simple'] = s['availability'].astype(str).str.lower()
-    s['availability_simple'] = s['availability_simple'].replace({
-        '24/7':'24/7','24hours':'24/7','always':'24/7','open 24 hours':'24/7'
-    })
-    s.loc[s['availability_simple'].str.contains('9:00|9-18|9am', na=False), 'availability_simple'] = 'daytime'
-else:
-    s['availability_simple'] = np.nan
-
-# Usage stats -> numeric
-for c in s.columns:
-    if 'usage' in c or 'avg users' in c or 'avg_users' in c:
-        s['avg_users_per_day'] = s[c].apply(to_numeric_safely)
-        break
-
-# Station operator cleanup
-if 'station_operator' in s.columns:
-    s['station_operator'] = s['station_operator'].astype(str).str.strip().replace({'nan':np.nan})
-else:
-    # attempt to find operator-like column
-    for c in s.columns:
-        if 'operator' in c or 'owner' in c:
-            s.rename(columns={c:'station_operator'}, inplace=True)
-            break
-
-# Fill some missing numeric values with medians (non-destructive)
-if 'cost_usd_per_kwh' in s.columns:
-    med_cost = s['cost_usd_per_kwh'].median(skipna=True)
-    s['cost_usd_per_kwh'] = s['cost_usd_per_kwh'].fillna(med_cost)
-
-if 'charging_capacity_kw' in s.columns:
-    med_cap = s['charging_capacity_kw'].median(skipna=True)
-    s['charging_capacity_kw'] = s['charging_capacity_kw'].fillna(med_cap)
-
-# Drop obvious duplicates based on lat/lon + operator + charger_type
-dedup_cols = []
-for c in ['latitude','longitude','station_operator','charger_type']:
-    if c in s.columns:
-        dedup_cols.append(c)
-if dedup_cols:
-    before = s.shape[0]
-    s = s.drop_duplicates(subset=dedup_cols, keep='first')
-    print(f"Dropped {before - s.shape[0]} duplicate station rows based on {dedup_cols}")
-
-# Reorder & keep useful columns
-keep_cols = ['station id','latitude','longitude','address','charger_type','charging_capacity_kw',
-             'cost_usd_per_kwh','availability_simple','avg_users_per_day','station_operator']
-# Use intersection
-keep = [c for c in keep_cols if c in s.columns]
-stations_clean = s[keep].copy()
-print("stations_clean shape:", stations_clean.shape)
-stations_clean.head(5)
-# Cell 7: Clean EV population data
-e = ev.copy()
-
-# Typical columns we expect: make, model, model_year, electric_range, fuel_type, vehicle_type, base_msrp
-# Normalize some common names
-colmap = {}
-for col in e.columns:
-    cl = col.lower()
-    if 'make' in cl and 'manufacturer' not in colmap:
-        colmap[col] = 'make'
-    if 'model_year' in cl or ('year' in cl and 'model' in cl):
-        colmap[col] = 'model_year'
-    if 'model' == cl or 'model_name' in cl or 'vehicle_model' in cl:
-        colmap[col] = 'model'
-    if 'electric' in cl and 'range' in cl:
-        colmap[col] = 'electric_range'
-    if 'fuel' in cl and 'type' in cl:
-        colmap[col] = 'fuel_type'
-    if 'vehicle_type' in cl or 'body_type' in cl:
-        colmap[col] = 'vehicle_type'
-    if 'base' in cl and 'msrp' in cl:
-        colmap[col] = 'base_msrp'
-
-e = e.rename(columns=colmap)
-
-# Make/model cleanup
-if 'make' in e.columns:
-    e['make'] = e['make'].astype(str).str.strip().str.title()
-if 'model' in e.columns:
-    e['model'] = e['model'].astype(str).str.strip()
-
-# model_year numeric
-if 'model_year' in e.columns:
-    e['model_year'] = pd.to_numeric(e['model_year'], errors='coerce').astype('Int64')
-
-# electric_range numeric
-if 'electric_range' in e.columns:
-    e['electric_range_km'] = e['electric_range'].apply(to_numeric_safely)
-    # If ranges are in miles (detect values > 500 -> probably km?), try to guess:
-    # Many EV ranges in miles are under 400. If > 600 it might be in km. Here we assume values > 400 are km; otherwise treat as miles and convert.
-    mask = (e['electric_range_km'] <= 400) & (e['electric_range_km'] > 0)
-    # We cannot be sure — we will create a miles column if needed. For now create electric_range_km and electric_range_miles
-    e['electric_range_miles'] = e['electric_range_km'] * 0.621371
-else:
-    e['electric_range_km'] = np.nan
-    e['electric_range_miles'] = np.nan
-
-# MSRP cleaning
-if 'base_msrp' in e.columns:
-    e['base_msrp_numeric'] = e['base_msrp'].apply(to_numeric_safely)
-else:
-    # try finding price columns
-    for c in e.columns:
-        if 'msrp' in c or 'price' in c or 'base' in c:
-            e['base_msrp_numeric'] = e[c].apply(to_numeric_safely)
-            break
-
-# Vehicle type classification
-if 'vehicle_type' in e.columns:
-    e['vehicle_type'] = e['vehicle_type'].astype(str).str.title()
-else:
-    # best effort: if fuel_type contains 'beV' or 'phev'
-    if 'fuel_type' in e.columns:
-        e['vehicle_type'] = e['fuel_type'].astype(str).str.upper().map(
-            lambda x: 'BEV' if 'BEV' in x or 'BATTERY' in x else ('PHEV' if 'PHEV' in x or 'PLUG-IN' in x else x)
-        )
-
-# Drop duplicates on make+model+year
-drop_cols = [c for c in ['make','model','model_year'] if c in e.columns]
-if drop_cols:
-    before = e.shape[0]
-    e = e.drop_duplicates(subset=drop_cols, keep='first')
-    print("Dropped duplicates from EV dataset:", before - e.shape[0])
-
-# Impute missing electric_range_km with median per make
-if 'electric_range_km' in e.columns and 'make' in e.columns:
-    median_by_make = e.groupby('make')['electric_range_km'].median()
-    def impute_range(row):
-        if pd.isna(row['electric_range_km']):
-            m = row.get('make', None)
-            if pd.notna(m) and m in median_by_make.index:
-                return median_by_make.loc[m]
-            else:
-                return e['electric_range_km'].median(skipna=True)
-        return row['electric_range_km']
-    e['electric_range_km'] = e.apply(impute_range, axis=1)
-
-# Final trimmed EV cleaned DataFrame
-ev_clean = e.copy()
-keep_cols_ev = [c for c in ['make','model','model_year','vehicle_type','fuel_type',
-                            'electric_range_km','electric_range_miles','base_msrp_numeric'] if c in ev_clean.columns]
-ev_clean = ev_clean[keep_cols_ev]
-print("ev_clean shape:", ev_clean.shape)
-ev_clean.head(8)
-# Cell 8: quick EDA / summaries
-print("Top makes (EV dataset):")
-if 'make' in ev_clean.columns:
-    display(ev_clean['make'].value_counts().head(15))
-
-print("\nCharger types (stations):")
-if 'charger_type' in stations_clean.columns:
-    display(stations_clean['charger_type'].value_counts().head(15))
-
-print("\nCost per kWh distribution (stations):")
-if 'cost_usd_per_kwh' in stations_clean.columns:
-    display(stations_clean['cost_usd_per_kwh'].describe())
-
-# Save cleaned CSVs
-ev_clean_path = "Electric_Vehicle_Population_Data_cleaned.csv"
-stations_clean_path = "detailed_ev_charging_stations_cleaned.csv"
-ev_clean.to_csv(ev_clean_path, index=False)
-stations_clean.to_csv(stations_clean_path, index=False)
-print("Saved cleaned files:", ev_clean_path, stations_clean_path)
-
-# If in Colab, offer download links
-try:
-    from google.colab import files
-    print("You can download the cleaned files now:")
-    files.download(ev_clean_path)
-    files.download(stations_clean_path)
-except Exception:
-    print("Not in Colab or download not supported in this environment.")
-
-
-
-
-#Week 2(Model Training)
-
-# ======= Extended Week-2 Training: Battery SoH, EcoScore, Maintenance, Forecast, Charging Cost =======
-# Paste into Google Colab and run.
-
-# 0) Install dependencies
-!pip install -q scikit-learn joblib pandas numpy prophet
-
-# 1) Imports
-import os, joblib, json, math, warnings
-import pandas as pd, numpy as np
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+import plotly.express as px
+import joblib, os, json
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.metrics import mean_absolute_error, r2_score
+from math import sqrt
 
-warnings.filterwarnings("ignore")
-OUT_DIR = "models_extended"
-os.makedirs(OUT_DIR, exist_ok=True)
-RANDOM_STATE = 42
+st.set_page_config("⚡ EV IntelliSense", layout="wide", page_icon="⚡")
 
-print("Setup done. Models will be saved to:", OUT_DIR)
+# -------------------------
+# Styling
+# -------------------------
+st.markdown(
+    """
+    <style>
+      .stApp { font-family: "Segoe UI", Roboto, Arial; background: #f6f7f9; }
+      header {display:none}
+      .topbar { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+      .brand { display:flex; align-items:center; gap:12px; }
+      .brand h1{ margin:0; font-size:22px; }
+      .sub{ color: #6b7280; margin-top:2px; font-size:13px;}
+      .card { background:white; padding:18px; border-radius:12px; box-shadow: 0 1px 8px rgba(0,0,0,0.04); }
+      .metric { padding: 14px; border-radius:10px; background:white; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+      .navtabs { display:flex; gap:8px; margin-top:14px; }
+      .navtabs button { padding:10px 22px; border-radius:12px; border: none; background: #e9e9e9; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-# 2) Load cleaned EV CSV (upload if missing)
-DATA_FILENAME = "Electric_Vehicle_Population_Data_cleaned.csv"
-if not os.path.exists(DATA_FILENAME):
-    from google.colab import files
-    print(f"Please upload {DATA_FILENAME}")
-    uploaded = files.upload()
-if not os.path.exists(DATA_FILENAME):
-    raise FileNotFoundError(f"{DATA_FILENAME} not found. Place it in working dir or upload via Colab UI.")
-df = pd.read_csv(DATA_FILENAME, low_memory=False)
-print("Loaded", DATA_FILENAME, "shape:", df.shape)
-display(df.head(3))
+# -------------------------
+# Utilities & Demo data
+# -------------------------
+MODELS_DIR = "models"
+os.makedirs(MODELS_DIR, exist_ok=True)
 
-# 3) Helpers: canonicalize + numeric safe parser
-def canonicalize_columns(df):
-    df = df.copy()
-    df.columns = [str(c).strip().lower().replace(' ', '_').replace('-', '_').replace('/','_').replace('.','') for c in df.columns]
-    return df
-
-def to_numeric_safely(v):
+def to_numeric(v):
     try:
         if pd.isna(v): return np.nan
-        s = str(v).replace(',','').replace('₹','').replace('$','').strip()
+        s = str(v).replace(',', '').replace('₹','').replace('$','')
         import re
-        s = re.sub(r'[^d\u002e\u002d]', '', s)
-        return float(s) if s not in ('', '.', '-') else np.nan
+        s = re.sub(r'[^\d\.\-]', '', s)
+        if s in ['', '.', '-']: return np.nan
+        return float(s)
     except:
         return np.nan
 
-df = canonicalize_columns(df)
+def clean_colnames(df):
+    df = df.copy()
+    df.columns = [str(c).strip().lower().replace(' ', '_').replace('%','pct').replace('/','_').replace('-','_').replace('.','') for c in df.columns]
+    return df
 
-# 4) Create or detect features commonly used
-# Ensure key derived features exist: model_year -> vehicle_age
-if 'model_year' in df.columns:
-    df['model_year'] = pd.to_numeric(df['model_year'], errors='coerce')
-    df['vehicle_age'] = 2025 - df['model_year']
+def demo_ev():
+    return pd.DataFrame([
+        {"make":"Tesla","model":"Model 3","model_year":2022,"battery_kwh":75,"electric_range_km":510,"efficiency":150,"base_msrp_numeric":3500000},
+        {"make":"Hyundai","model":"Kona EV","model_year":2023,"battery_kwh":64,"electric_range_km":450,"efficiency":142,"base_msrp_numeric":1695000},
+        {"make":"Tata","model":"Nexon EV","model_year":2022,"battery_kwh":40,"electric_range_km":312,"efficiency":128,"base_msrp_numeric":1400000},
+        {"make":"Nissan","model":"Leaf","model_year":2019,"battery_kwh":40,"electric_range_km":240,"efficiency":160,"base_msrp_numeric":1200000},
+        {"make":"Chevrolet","model":"Bolt","model_year":2020,"battery_kwh":66,"electric_range_km":416,"efficiency":158,"base_msrp_numeric":2000000},
+    ])
+
+def demo_stations():
+    return pd.DataFrame([
+        {"station_id":"S1","address":"Downtown Fast Hub","latitude":12.9716,"longitude":77.5946,"charger_type":"DC Fast","charging_capacity_kw":150,"cost_usd_per_kwh":0.25,"station_operator":"EVgo"},
+        {"station_id":"S2","address":"Mall Level 2","latitude":12.97,"longitude":77.59,"charger_type":"AC Level 2","charging_capacity_kw":22,"cost_usd_per_kwh":0.12,"station_operator":"ChargePoint"},
+        {"station_id":"S3","address":"Highway Supercharger","latitude":12.98,"longitude":77.60,"charger_type":"DC Fast","charging_capacity_kw":250,"cost_usd_per_kwh":0.30,"station_operator":"SuperNet"},
+        {"station_id":"S4","address":"Market Street","latitude":12.96,"longitude":77.58,"charger_type":"AC Level 2","charging_capacity_kw":11,"cost_usd_per_kwh":0.15,"station_operator":"GreenLots"},
+    ])
+
+# -------------------------
+# Header UI
+# -------------------------
+with st.container():
+    st.markdown('<div class="topbar"><div class="brand"><div style="width:58px;height:58px;border-radius:12px;background:#0b5ed7;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:28px">⚡</div>'
+                '<div><h1>EV IntelliSense</h1><div class="sub">AI-Powered EV Analytics & Insights</div></div></div></div>', unsafe_allow_html=True)
+
+# -------------------------
+# Sidebar: Upload + options
+# -------------------------
+st.sidebar.header("Data & Settings")
+ev_file = st.sidebar.file_uploader("Upload Electric_Vehicle_Population_Data.csv", type=["csv"])
+st_file = st.sidebar.file_uploader("Upload detailed_ev_charging_stations.csv", type=["csv"])
+use_demo = st.sidebar.checkbox("Use demo data", True)
+enable_openai = st.sidebar.checkbox("Enable OpenAI Chat (optional)", False)
+openai_key = None
+if enable_openai:
+    openai_key = st.sidebar.text_input("OpenAI Key (sk-...)", type="password")
+
+train_models_now = st.sidebar.button("Train models (optional)")
+
+# load data
+if ev_file:
+    ev_raw = pd.read_csv(ev_file, low_memory=False)
 else:
-    if 'vehicle_age' not in df.columns:
-        df['vehicle_age'] = np.nan
+    ev_raw = demo_ev() if use_demo else pd.DataFrame()
 
-# Numeric features candidates (you can expand)
-NUMERIC_CANDIDATES = [c for c in ['battery_kwh','electric_range_km','efficiency','top_speed','accel_0_100','vehicle_age','number_of_seats'] if c in df.columns]
-CATEGORICAL_CANDIDATES = [c for c in ['make','vehicle_type','fuel_type','model'] if c in df.columns]
-
-print("Numeric features available:", NUMERIC_CANDIDATES)
-print("Categorical features available:", CATEGORICAL_CANDIDATES)
-
-# 5) Prepare small helper to encode categorical features (LabelEncoder)
-def encode_categorical(df_sub, cat_cols):
-    encoders = {}
-    X_cat = pd.DataFrame(index=df_sub.index)
-    for c in cat_cols:
-        le = LabelEncoder()
-        vals = df_sub[c].astype(str).fillna('nan')
-        X_cat[c] = le.fit_transform(vals)
-        encoders[c] = le
-    return X_cat, encoders
-
-# 6) Function to train a regression model and save artifacts
-def train_regression(target_col, df, numeric_feats, cat_feats, out_dir=OUT_DIR, run_tuning=False):
-    print("\n>>> Training target:", target_col)
-    # If target not present, raise
-    if target_col not in df.columns:
-        raise ValueError(f"Target {target_col} not in dataframe.")
-    # Drop rows without target
-    dfm = df.dropna(subset=[target_col]).copy()
-    print("Rows available:", dfm.shape[0])
-    if dfm.shape[0] < 30:
-        print("Warning: fewer than 30 rows for this target — results may be unreliable.")
-    # Numeric matrix
-    X_num = dfm[numeric_feats].copy() if numeric_feats else pd.DataFrame(index=dfm.index)
-    if not X_num.empty:
-        X_num = X_num.applymap(lambda v: to_numeric_safely(v))
-        X_num = X_num.astype(float)
-        X_num = X_num.fillna(X_num.median())
-    # Categorical encode
-    X_cat, encs = encode_categorical(dfm, cat_feats) if cat_feats else (pd.DataFrame(index=dfm.index), {})
-    if not X_num.empty and not X_cat.empty:
-        X = pd.concat([X_num, X_cat], axis=1)
-    elif not X_num.empty:
-        X = X_num.copy()
-    elif not X_cat.empty:
-        X = X_cat.copy()
-    else:
-        raise ValueError("No features to train on.")
-    y = dfm[target_col].astype(float)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE)
-    scaler = StandardScaler()
-    X_train_s = scaler.fit_transform(X_train)
-    X_test_s = scaler.transform(X_test)
-    model = RandomForestRegressor(n_estimators=150, random_state=RANDOM_STATE, n_jobs=-1)
-    model.fit(X_train_s, y_train)
-    # Evaluate
-    y_pred = model.predict(X_test_s)
-    mae = mean_absolute_error(y_test, y_pred)
-    mse = mean_squared_error(y_test, y_pred)
-    rmse = np.sqrt(mse) # Corrected: Calculate RMSE from MSE
-    r2 = r2_score(y_test, y_pred)
-    print(f"Results for {target_col}: R2={r2:.4f}, MAE={mae:.4f}, RMSE={rmse:.4f}")
-    # Save artifacts
-    joblib.dump(model, os.path.join(out_dir, f"rf_{target_col}.pkl"))
-    joblib.dump(scaler, os.path.join(out_dir, f"scaler_{target_col}.pkl"))
-    joblib.dump(encs, os.path.join(out_dir, f"encoders_{target_col}.pkl"))
-    with open(os.path.join(out_dir, f"meta_{target_col}.json"), "w") as f:
-        json.dump({"target": target_col, "numeric_feats": numeric_feats, "cat_feats": cat_feats}, f, indent=2)
-    # Feature importances
-    feat_names = X.columns.tolist()
-    imp = model.feature_importances_
-    fi = sorted(zip(feat_names, imp), key=lambda x: x[1], reverse=True)
-    print("Top features:", fi[:6])
-    # Example prediction using median row
-    example = X.median().to_frame().T.fillna(0)
-    try:
-        xp = scaler.transform(example)
-        ex_pred = float(model.predict(xp)[0])
-    except:
-        ex_pred = None
-    return {"model": model, "scaler": scaler, "encoders": encs, "metrics": {"r2": r2, "mae": mae, "rmse": rmse}, "example_pred": ex_pred}
-
-# ----------------------------------------------------------------
-# 7) BATTERY HEALTH ESTIMATOR
-# If 'battery_soh' exists, use it; otherwise create a heuristic proxy and train on it.
-if 'battery_soh' in df.columns:
-    print("\nBattery SoH labels found: training on 'battery_soh'.")
-    battery_target = 'battery_soh'
-    # numeric + cat features to use
-    numeric_feats = [f for f in ['battery_kwh','electric_range_km','vehicle_age','efficiency'] if f in df.columns]
-    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in df.columns]
-    res_batt = train_regression(battery_target, df, numeric_feats, cat_feats)
+if st_file:
+    st_raw = pd.read_csv(st_file, low_memory=False)
 else:
-    # create proxy SoH using heuristic:
-    # Soh = max(30, 100 - (vehicle_age * 0.9) - (fast_charge_penalty) - temp_penalty)
-    # if no fast_charge info, assume 0 or infer from charger_count column names
-    print("\nNo 'battery_soh' in dataset. Creating heuristic proxy SoH and training on it.")
-    df_proxy = df.copy()
-    # attempt to find fast charge frequency columns or station usage proxies (best-effort)
-    fastc = None
-    for c in df_proxy.columns:
-        if 'fast' in c and 'charge' in c:
-            fastc = c; break
-    if fastc is None:
-        # no column — assume 0 fast charges (proxy)
-        df_proxy['fast_charges_per_week'] = 0.0
-    else:
-        df_proxy['fast_charges_per_week'] = pd.to_numeric(df_proxy[fastc], errors='coerce').fillna(0)
-    # temperature proxy not available -> assume 25°C ambient
-    df_proxy['ambient_temp_c'] = df_proxy.get('ambient_temp_c', 25.0)
-    # compute heuristic SoH
-    df_proxy['battery_soh_proxy'] = df_proxy.apply(lambda r:
-        max(20.0, 100.0 - ( (r.get('vehicle_age',0) if not pd.isna(r.get('vehicle_age',np.nan)) else 0)*0.9 )
-            - min(5.0, 0.5 * r.get('fast_charges_per_week',0))
-            - max(0, (r.get('ambient_temp_c',25.0)-25.0)*0.05)
-        ), axis=1)
-    # train model to predict battery_soh_proxy
-    battery_target = 'battery_soh_proxy'
-    numeric_feats = [f for f in ['battery_kwh','electric_range_km','vehicle_age','efficiency','fast_charges_per_week','ambient_temp_c'] if f in df_proxy.columns]
-    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in df_proxy.columns]
-    res_batt = train_regression(battery_target, df_proxy, numeric_feats, cat_feats)
+    st_raw = demo_stations() if use_demo else pd.DataFrame()
 
-# ----------------------------------------------------------------
-# 8) ECOSCORE (formula + optional ML)
-# Compute EcoScore for all rows as a normalized composite and train a model to predict it (if desired)
-print("\nComputing EcoScore (formulaic) and training model to predict it.")
-df_ec = df.copy()
-# require range and efficiency to compute meaningful score
-if 'electric_range_km' in df_ec.columns and 'efficiency' in df_ec.columns:
-    # formula: raw = (range / efficiency) * 10 ; age penalty
-    df_ec['eco_raw'] = (df_ec['electric_range_km'].astype(float).fillna(0) / df_ec['efficiency'].astype(float).replace(0, np.nan).fillna(df_ec['efficiency'].median()))
-    df_ec['eco_raw'] = df_ec['eco_raw'] * 10.0
-    df_ec['eco_age_penalty'] = df_ec.get('vehicle_age',0) * 1.5
-    df_ec['eco_score'] = (df_ec['eco_raw'] - df_ec['eco_age_penalty']).clip(lower=0)
-    # scale 0-100 roughly
-    maxv = df_ec['eco_score'].quantile(0.98) if df_ec['eco_score'].notna().any() else 100.0
-    df_ec['eco_score_norm'] = (df_ec['eco_score'] / (maxv+1e-9) * 100).clip(0,100)
-    # train regressor to predict eco_score_norm
-    eco_target = 'eco_score_norm'
-    numeric_feats = [f for f in ['battery_kwh','electric_range_km','efficiency','vehicle_age'] if f in df_ec.columns]
-    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in df_ec.columns]
-    res_eco = train_regression(eco_target, df_ec, numeric_feats, cat_feats)
-else:
-    print("Not enough columns (range, efficiency) to compute EcoScore. Skipping Eco model.")
-    res_eco = None
+# normalize
+if not ev_raw.empty: ev_raw = clean_colnames(ev_raw)
+if not st_raw.empty: st_raw = clean_colnames(st_raw)
 
-# ----------------------------------------------------------------
-# 9) MAINTENANCE COST PREDICTOR
-# If 'maintenance_cost' exists, train on it; else create heuristic target and train.
-if 'maintenance_cost' in df.columns or 'expected_service_cost' in df.columns:
-    maint_col = 'maintenance_cost' if 'maintenance_cost' in df.columns else 'expected_service_cost'
-    print("\nFound maintenance cost label:", maint_col, "-> training.")
-    numeric_feats = [f for f in ['vehicle_age','battery_kwh','electric_range_km','battery_soh'] if f in df.columns]
-    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in df.columns]
-    res_maint = train_regression(maint_col, df, numeric_feats, cat_feats)
-else:
-    print("\nNo maintenance cost labels found. Creating heuristic maintenance target and training.")
-    dfm = df.copy()
-    # if battery_soh previously computed either real or proxy
-    if 'battery_soh' in dfm.columns:
-        soh_col = 'battery_soh'
-    elif 'battery_soh_proxy' in dfm.columns:
-        soh_col = 'battery_soh_proxy'
-    else:
-        soh_col = None
-    # heuristic: base + age factor + battery penalty
-    def compute_maint(row):
-        age = row.get('vehicle_age', 3) if not pd.isna(row.get('vehicle_age', np.nan)) else 3
-        battery_pen = 0
-        if soh_col and soh_col in row.index and not pd.isna(row[soh_col]):
-            battery_pen = (100 - row[soh_col]) * 50.0
-        return 2000 + age * 500 + battery_pen
-    dfm['maintenance_cost_proxy'] = dfm.apply(compute_maint, axis=1)
-    maint_target = 'maintenance_cost_proxy'
-    numeric_feats = [f for f in ['vehicle_age','battery_kwh','electric_range_km'] if f in dfm.columns]
-    if soh_col: numeric_feats.append(soh_col)
-    cat_feats = [c for c in CATEGORICAL_CANDIDATES if c in dfm.columns]
-    res_maint = train_regression(maint_target, dfm, numeric_feats, cat_feats)
+# -------------------------
+# Tabs / Navigation
+# -------------------------
+tabs = st.tabs(["Dashboard", "Predict", "Chargers", "Chat"])
+# -------------------------
+# Cleaning helper functions
+# -------------------------
+def clean_ev(df):
+    e = df.copy()
+    # map common columns
+    if 'electric_range' in e.columns and 'electric_range_km' not in e.columns:
+        e['electric_range_km'] = e['electric_range'].apply(to_numeric)
+    if 'base_msrp' in e.columns and 'base_msrp_numeric' not in e.columns:
+        e['base_msrp_numeric'] = e['base_msrp'].apply(to_numeric)
+    if 'model_year' in e.columns:
+        e['model_year'] = pd.to_numeric(e['model_year'], errors='coerce').astype('Int64')
+        e['vehicle_age'] = 2025 - e['model_year']
+    if 'electric_range_km' in e.columns:
+        e['electric_range_km'] = e['electric_range_km'].apply(to_numeric)
+    if 'efficiency' in e.columns:
+        e['efficiency'] = e['efficiency'].apply(to_numeric)
+    # drop exact duplicates
+    dedup_cols = [c for c in ['make','model','model_year'] if c in e.columns]
+    if dedup_cols:
+        e = e.drop_duplicates(subset=dedup_cols, keep='first')
+    # impute missing range with make median
+    if 'electric_range_km' in e.columns and 'make' in e.columns:
+        med = e.groupby('make')['electric_range_km'].median()
+        def imp(r):
+            if pd.isna(r['electric_range_km']):
+                m = r.get('make')
+                if pd.notna(m) and m in med.index:
+                    return med.loc[m]
+                return e['electric_range_km'].median(skipna=True)
+            return r['electric_range_km']
+        e['electric_range_km'] = e.apply(imp, axis=1)
+    return e
 
-# ----------------------------------------------------------------
-# 10) MARKET FORECAST
-# If dataset has a date column (registration_date or similar), aggregate monthly and forecast with Prophet if available.
-print("\nMarket Forecast: looking for date/time column to aggregate monthly registrations.")
-date_col = None
-for c in df.columns:
-    if 'date' in c or 'time' in c or 'month' in c:
-        date_col = c; break
+def clean_stations(df):
+    s = df.copy()
+    # unify cost
+    poss = [c for c in s.columns if 'cost' in c and 'kwh' in c]
+    if poss:
+        s['cost_usd_per_kwh'] = s[poss[0]].apply(to_numeric)
+    # charger type
+    for c in s.columns:
+        if 'charger' in c or 'connector' in c or 'plug' in c:
+            s = s.rename(columns={c:'charger_type'}); break
+    # capacity
+    cap = next((c for c in s.columns if 'kw' in c or 'capacity' in c), None)
+    if cap:
+        s['charging_capacity_kw'] = s[cap].apply(to_numeric)
+    # lat lon
+    for lat in ['latitude','lat','station_latitude']:
+        for lon in ['longitude','lon','lng','station_longitude']:
+            if lat in s.columns and lon in s.columns:
+                s['latitude'] = pd.to_numeric(s[lat], errors='coerce')
+                s['longitude'] = pd.to_numeric(s[lon], errors='coerce')
+                break
+    # operator
+    for c in s.columns:
+        if 'operator' in c or 'owner' in c:
+            s = s.rename(columns={c:'station_operator'}); break
+    # fill medians
+    if 'cost_usd_per_kwh' in s.columns:
+        s['cost_usd_per_kwh'] = s['cost_usd_per_kwh'].fillna(s['cost_usd_per_kwh'].median(skipna=True))
+    if 'charging_capacity_kw' in s.columns:
+        s['charging_capacity_kw'] = s['charging_capacity_kw'].fillna(s['charging_capacity_kw'].median(skipna=True))
+    return s
 
-if date_col:
-    print("Found date-like column:", date_col)
-    df_dates = df[[date_col]].copy()
-    df_dates['ds'] = pd.to_datetime(df_dates[date_col], errors='coerce')
-    df_dates = df_dates.dropna(subset=['ds'])
-    if df_dates.shape[0] < 12:
-        print("Too few date rows (less than 12) — producing simple year-count projection")
-        # fall back: counts by model_year
-        if 'model_year' in df.columns:
-            counts = df['model_year'].value_counts().sort_index()
-            Xy = counts.reset_index().rename(columns={'model_year':'year'})
-            # linear regression on year->count
-            lr = LinearRegression()
-            X = Xy[['year']].astype(float)
-            y = Xy['count'].astype(float)
-            lr.fit(X, y)
-            next_year = int(X['year'].max()) + 1
-            pred_next = lr.predict([[next_year]])[0]
-            print(f"Projected count next year ({next_year}): {int(pred_next)}")
-            joblib.dump(lr, os.path.join(OUT_DIR, "market_lr_year_count.pkl"))
+# run cleaning once
+if 'ev_clean' not in st.session_state:
+    st.session_state['ev_clean'] = clean_ev(ev_raw) if not ev_raw.empty else pd.DataFrame()
+if 'st_clean' not in st.session_state:
+    st.session_state['st_clean'] = clean_stations(st_raw) if not st_raw.empty else pd.DataFrame()
+
+# -------------------------
+# Dashboard Tab
+# -------------------------
+with tabs[0]:
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("### Dashboard")
+    st.write("Overview of loaded data and key metrics")
+    evc = st.session_state['ev_clean']
+    stc = st.session_state['st_clean']
+    # Top metric cards
+    col1, col2, col3, col4 = st.columns([1,1,1,1])
+    with col1:
+        total = int(evc.shape[0]) if not evc.empty else 0
+        st.markdown(f"<div class='metric'><h3 style='margin:0'>{total:,}</h3><div style='color:#6b7280'>Total Vehicles</div></div>", unsafe_allow_html=True)
+    with col2:
+        avg_soh =  np.nan
+        # if battery_soh or battery_soh_proxy exists
+        if 'battery_soh' in evc.columns and evc['battery_soh'].notna().any():
+            avg_soh = evc['battery_soh'].mean()
+        elif 'battery_soh_proxy' in evc.columns and evc['battery_soh_proxy'].notna().any():
+            avg_soh = evc['battery_soh_proxy'].mean()
         else:
-            print("No model_year to project from.")
+            avg_soh =  np.nan
+        st.metric("Avg Battery SoH", f"{np.round(avg_soh,2) if not np.isnan(avg_soh) else 'N/A'}%")
+    with col3:
+        eco_avg = evc.eval("electric_range_km/efficiency") if ('electric_range_km' in evc.columns and 'efficiency' in evc.columns) else None
+        if eco_avg is not None:
+            st.metric("Eco Score (proxy)", f"{np.round((eco_avg.fillna(0).mean()*10),2)} / 100")
+        else:
+            st.metric("Eco Score (proxy)", "N/A")
+    with col4:
+        active_ch = int(stc.shape[0]) if not stc.empty else 0
+        st.markdown(f"<div class='metric'><h3 style='margin:0'>{active_ch}</h3><div style='color:#6b7280'>Active Chargers</div></div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+    # Charts row
+    a,b = st.columns([2,1])
+    with a:
+        st.subheader("EV Models Distribution")
+        if not evc.empty and 'make' in evc.columns:
+            fig = px.histogram(evc, x='make', title="Vehicle count by manufacturer")
+            fig.update_layout(margin=dict(t=40,l=10,r=10,b=10))
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Upload EV dataset to view charts")
+    with b:
+        st.subheader("Battery SoH trend (sample)")
+        # synthetic time-series for demo if no soh
+        if 'battery_soh' in evc.columns and evc['battery_soh'].notna().any():
+            tmp = evc[['battery_soh']].copy()
+            tmp['month'] = pd.date_range(end=pd.Timestamp.today(), periods=len(tmp)).strftime('%b')
+            fig2 = px.line(tmp, x='month', y='battery_soh', title="Battery SoH")
+            st.plotly_chart(fig2, use_container_width=True)
+        else:
+            st.info("Battery SoH unavailable — proxy available after training")
+
+    st.markdown("---")
+    st.subheader("EcoScore Distribution")
+    if not evc.empty and 'electric_range_km' in evc.columns and 'efficiency' in evc.columns:
+        evc['eco_raw'] = (evc['electric_range_km'] / evc['efficiency']) * 10.0
+        evc['eco_cat'] = pd.cut(evc['eco_raw'], bins=[-1,30,50,70,999], labels=['Poor','Average','Good','Excellent'])
+        fig3 = px.pie(evc, names='eco_cat', title="EcoScore Distribution", hole=0.35)
+        st.plotly_chart(fig3, use_container_width=True)
     else:
-        # aggregate monthly
-        df_dates['month'] = df_dates['ds'].dt.to_period('M').dt.to_timestamp()
-        monthly = df_dates.groupby('month').size().reset_index(name='count')
-        monthly = monthly.sort_values('month')
-        print("Monthly series length:", len(monthly))
-        # try Prophet
-        try:
-            from prophet import Prophet
-            m = Prophet(yearly_seasonality=True)
-            mp = monthly.rename(columns={'month':'ds','count':'y'})
-            m.fit(mp)
-            future = m.make_future_dataframe(periods=12, freq='M')
-            fc = m.predict(future)
-            fc_tail = fc[['ds','yhat']].tail(12)
-            display(fc_tail)
-            joblib.dump(m, os.path.join(OUT_DIR, "market_prophet.pkl"))
-            print("Prophet model saved.")
-        except Exception as e:
-            print("Prophet not available or failed:", e)
-            # simple moving-average forecast
-            vals = monthly['count'].values
-            ma6 = float(vals[-6:].mean()) if len(vals) >= 6 else float(vals.mean())
-            preds = [int(ma6*(1+0.02*i)) for i in range(12)]
-            print("Simple MA-based 12-month forecast (approx):", preds)
-            joblib.dump(preds, os.path.join(OUT_DIR, "market_ma_preds.pkl"))
-else:
-    print("No date-like column found. Using model_year counts to produce a simple projection (if available).")
-    if 'model_year' in df.columns:
-        counts = df['model_year'].value_counts().sort_index()
-        Xy = counts.reset_index().rename(columns={'model_year':'year'})
-        lr = LinearRegression()
-        X = Xy[['year']].astype(float)
-        y = Xy['count'].astype(float)
-        lr.fit(X, y)
-        next_year = int(X['year'].max()) + 1
-        pred_next = lr.predict([[next_year]])[0]
-        print(f"Projected models (count) next year ({next_year}): {int(pred_next)}")
-        joblib.dump(lr, os.path.join(OUT_DIR, "market_lr_year_count.pkl"))
+        st.info("Upload EV data with range & efficiency to compute EcoScore")
+
+# -------------------------
+# Predict Tab
+# -------------------------
+with tabs[1]:
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.header("Vehicle Prediction")
+    evc = st.session_state['ev_clean']
+    # form
+    with st.form("predict_form"):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            make = st.selectbox("Make", options=sorted(evc['make'].dropna().unique()) if ('make' in evc.columns and not evc.empty) else ['Tesla','Hyundai','Tata'])
+            model = st.text_input("Model")
+            year = st.number_input("Model Year", min_value=1990, max_value=2025, value=2022)
+        with col2:
+            battery = st.number_input("Battery (kWh)", min_value=10.0, max_value=200.0, value=float(evc['battery_kwh'].median()) if 'battery_kwh' in evc.columns and evc['battery_kwh'].notna().any() else 64.0)
+            rng = st.number_input("Range (km)", min_value=50.0, max_value=1000.0, value=float(evc['electric_range_km'].median()) if 'electric_range_km' in evc.columns and evc['electric_range_km'].notna().any() else 400.0)
+            eff = st.number_input("Efficiency (Wh/km)", min_value=50.0, max_value=400.0, value=float(evc['efficiency'].median()) if 'efficiency' in evc.columns and evc['efficiency'].notna().any() else 150.0)
+        with col3:
+            fast_ch = st.number_input("Fast charges/week", min_value=0.0, max_value=50.0, value=0.5)
+            miles_day = st.number_input("Daily distance (km)", min_value=1, max_value=500, value=40)
+            seats = st.number_input("Seats", min_value=1, max_value=9, value=5)
+        submitted = st.form_submit_button("Generate Predictions")
+    if submitted:
+        # Heuristic Battery SoH estimator (fallback)
+        age = 2025 - year
+        soh = max(20.0, 100.0 - 0.9*age - 0.5*fast_ch - max(0, (30 - 25)*0.05))
+        # Eco score
+        eco = round(((rng / eff) * 10.0) - age*1.5, 2)
+        eco = max(0, min(100, eco))
+        # maintenance cost heuristic
+        maint = 2000 + age*500 + (100 - soh)*50
+        # price heuristic (simple linear)
+        price = 50000 + battery*15000 + rng*200 + (seats-4)*10000
+        price = int(price)
+        colA, colB, colC, colD = st.columns(4)
+        colA.metric("Battery SoH (est)", f"{round(soh,2)}%")
+        colB.metric("EcoScore", f"{eco}/100")
+        colC.metric("Est. Annual Maintenance", f"₹{int(maint)}")
+        colD.metric("Predicted Price", f"₹{price:,}")
+        st.markdown("#### Range vs Efficiency")
+        df_scatter = pd.DataFrame({"model":[model],"range_km":[rng],"eff_wh_km":[eff]})
+        fig = px.scatter(df_scatter, x='range_km', y='eff_wh_km', text='model', size=[12])
+        st.plotly_chart(fig, use_container_width=True)
+
+    # Optional training of simple models from client data
+    st.markdown("---")
+    st.subheader("Train simple models from uploaded EV dataset (optional)")
+    st.caption("Creates model artifacts under ./models (battery_soh_proxy, eco_score_norm, maintenance_cost_proxy, price if available).")
+    if train_models_now:
+        evtrain = st.session_state['ev_clean']
+        if evtrain.empty:
+            st.error("No EV data to train. Upload data or enable demo.")
+        else:
+            with st.spinner("Training models..."):
+                # create proxies if not present
+                df = evtrain.copy()
+                if 'vehicle_age' not in df.columns and 'model_year' in df.columns:
+                    df['vehicle_age'] = 2025 - df['model_year'].astype(float)
+                if 'battery_soh' not in df.columns:
+                    df['fast_charges_per_week'] = df.get('fast_charges_per_week', 0)
+                    df['battery_soh_proxy'] = df.apply(lambda r: max(20.0, 100.0 - 0.9*(r.get('vehicle_age') or 3) - 0.5*(r.get('fast_charges_per_week') or 0)), axis=1)
+                # features & categorical
+                NUM = [c for c in ['battery_kwh','electric_range_km','efficiency','vehicle_age','fast_charges_per_week'] if c in df.columns]
+                CAT = [c for c in ['make','vehicle_type','fuel_type'] if c in df.columns]
+                def encode_cols(X, cols):
+                    enc = {}
+                    Xc = pd.DataFrame(index=X.index)
+                    for c in cols:
+                        le = LabelEncoder(); Xc[c] = le.fit_transform(X[c].astype(str).fillna('nan')); enc[c]=le
+                    return Xc, enc
+                def train_target(target):
+                    if target not in df.columns: return None
+                    sub = df.dropna(subset=[target]).copy()
+                    if sub.shape[0] < 8:
+                        return None
+                    Xn = sub[NUM].applymap(to_numeric) if NUM else pd.DataFrame(index=sub.index)
+                    Xn = Xn.fillna(Xn.median()) if not Xn.empty else Xn
+                    Xc, enc = encode_cols(sub, CAT) if CAT else (pd.DataFrame(index=sub.index), {})
+                    X = pd.concat([Xn, Xc], axis=1) if not Xn.empty else Xc.copy()
+                    y = sub[target].astype(float)
+                    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, random_state=42)
+                    scaler = StandardScaler(); Xtr_s = scaler.fit_transform(Xtr); Xte_s = scaler.transform(Xte)
+                    rf = RandomForestRegressor(n_estimators=150, random_state=42, n_jobs=-1); rf.fit(Xtr_s, ytr)
+                    preds = rf.predict(Xte_s)
+                    mae = mean_absolute_error(yte, preds); r2 = r2_score(yte, preds)
+                    joblib.dump(rf, os.path.join(MODELS_DIR, f"rf_{target}.pkl"))
+                    joblib.dump(scaler, os.path.join(MODELS_DIR, f"scaler_{target}.pkl"))
+                    joblib.dump(enc, os.path.join(MODELS_DIR, f"enc_{target}.pkl"))
+                    return {"target":target,"r2":r2,"mae":mae}
+                results = {}
+                # battery target
+                batt_t = 'battery_soh' if 'battery_soh' in df.columns else 'battery_soh_proxy'
+                r1 = train_target(batt_t)
+                results['battery'] = r1
+                # eco score
+                if 'electric_range_km' in df.columns and 'efficiency' in df.columns:
+                    df['eco_raw'] = (df['electric_range_km']/df['efficiency'])*10.0
+                    df['eco_score_norm'] = ((df['eco_raw'] - (df['vehicle_age'].fillna(0)*1.5))).clip(0,100)
+                    r2 = train_target('eco_score_norm')
+                    results['eco'] = r2
+                # maintenance proxy
+                df['maintenance_cost_proxy'] = df.apply(lambda r: 2000 + (r.get('vehicle_age') or 3)*500 + (100 - (r.get(batt_t,90) or 90))*50, axis=1)
+                results['maint'] = train_target('maintenance_cost_proxy')
+                st.success("Training finished")
+                st.json(results)
+
+# -------------------------
+# Chargers Tab
+# -------------------------
+with tabs[2]:
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.header("Find Charging Stations")
+    st.write("AI-powered recommendations based on priority")
+    stc = st.session_state['st_clean']
+    if stc.empty:
+        st.info("No stations data loaded. Upload CSV or enable demo to see stations.")
     else:
-        print("No model_year or date info to forecast market. Skipping forecast.")
+        left, right = st.columns([1,2])
+        with left:
+            lat = st.number_input("Your Latitude", float(stc['latitude'].median() if 'latitude' in stc.columns else 12.97))
+            lon = st.number_input("Your Longitude", float(stc['longitude'].median() if 'longitude' in stc.columns else 77.59))
+            priority = st.selectbox("Sort by Priority", options=["balanced","lowest_cost","fastest"])
+            cur_soc = st.slider("Current SOC (%)", 0,100,20)
+            tgt_soc = st.slider("Target SOC (%)", 0,100,80)
+            find = st.button("Find Stations")
+        def recommend(df, lat, lon, cur, tgt, priority):
+            s = df.copy()
+            # distance rough haversine approx ~ using degrees->km factor
+            if 'latitude' in s.columns and 'longitude' in s.columns:
+                s['dist_km'] = np.sqrt((s['latitude']-lat)**2 + (s['longitude']-lon)**2)*111
+            else:
+                s['dist_km'] = 9999
+            s['charging_capacity_kw'] = s.get('charging_capacity_kw', np.nan)
+            s['cost_usd_per_kwh'] = s.get('cost_usd_per_kwh', np.nan)
+            batt_kwh = float((evc['battery_kwh'].median() if (not evc.empty and 'battery_kwh' in evc.columns) else 60.0))
+            kwh_needed = batt_kwh * max(0, (tgt-cur))/100.0
+            s['est_time_min'] = (kwh_needed / s['charging_capacity_kw'].replace(0,10)) * 60
+            # score combining cost, distance, speed
+            s['score'] = 0.0
+            if s['cost_usd_per_kwh'].notna().any(): s['score'] += (1/(s['cost_usd_per_kwh']+1e-9))*0.4
+            s['score'] += (1/(s['dist_km']+1e-9))*0.3
+            if s['charging_capacity_kw'].notna().any(): s['score'] += (s['charging_capacity_kw']/(s['charging_capacity_kw'].max()+1e-9))*0.3
+            if priority == 'lowest_cost':
+                s = s.sort_values('cost_usd_per_kwh').head(10)
+            elif priority == 'fastest':
+                s = s.sort_values('charging_capacity_kw', ascending=False).head(10)
+            else:
+                s = s.sort_values('score', ascending=False).head(10)
+            return s
+        if 'find' in locals() and find:
+            recs = recommend(stc, lat, lon, cur_soc, tgt_soc, priority)
+            st.dataframe(recs[['station_id','address','dist_km','charging_capacity_kw','cost_usd_per_kwh','est_time_min']].fillna("N/A"))
+        else:
+            st.info("Set location & press Find Stations to get recommendations.")
 
-# ----------------------------------------------------------------
-# 11) CHARGING SESSION COST & OPERATOR PRICE SUGGESTION
-# Use stations CSV if available to compute cost per session or recommend operator price.
-STATIONS_FILE = "detailed_ev_charging_stations_cleaned.csv"
-if os.path.exists(STATIONS_FILE):
-    stn = pd.read_csv(STATIONS_FILE)
-    stn = stn.rename(columns={c:c.strip().lower().replace(' ', '_') for c in stn.columns})
-    # find cost column
-    cost_col = next((c for c in stn.columns if 'cost' in c and 'kwh' in c), None)
-    cap_col = next((c for c in stn.columns if 'kw' in c or 'capacity' in c), None)
-    if cost_col:
-        stn['cost_usd_per_kwh'] = stn[cost_col].apply(to_numeric_safely)
-    if cap_col:
-        stn['charging_capacity_kw'] = stn[cap_col].apply(to_numeric_safely)
-    # simple function for session cost
-    def session_cost(kwh_needed, cost_per_kwh):
-        return kwh_needed * cost_per_kwh
-    # example: compute session cost for median station and 50%->80% charge of battery_kwh median
-    median_batt = df['battery_kwh'].median() if 'battery_kwh' in df.columns else 50.0
-    kwh_needed = median_batt * 0.6  # example 60% of battery
-    if cost_col:
-        median_cost = stn['cost_usd_per_kwh'].median(skipna=True)
-        est_session_cost = session_cost(kwh_needed, median_cost)
-        print("\nEstimated session cost (median station) for ~60% charge of median battery: ", est_session_cost, "USD")
-        # suggest operator price with markup
-        suggested_price = median_cost * 1.2  # 20% markup
-        print("Suggested operator price per kWh (20% margin):", suggested_price, "USD/kWh")
-    else:
-        print("No cost per kWh found in stations file; cannot estimate session cost.")
-else:
-    print("\nNo stations cleaned CSV found in working directory. If you want session cost calculations, place 'detailed_ev_charging_stations_cleaned.csv' here.")
+# -------------------------
+# Chat Tab
+# -------------------------
+with tabs[3]:
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.header("EV IntelliSense Chat")
+    st.write("Ask about range, battery health, charging costs, or maintenance.")
+    if 'chat_history' not in st.session_state:
+        st.session_state['chat_history'] = [("Bot","Hello! I'm EV IntelliSense AI. Ask me anything about EVs, battery health, charging, or maintenance.")]
+    for who, text in st.session_state['chat_history'][-12:]:
+        if who=="You":
+            st.markdown(f"<div style='text-align:right; background:#1f2937; color:white; padding:12px; border-radius:8px; margin-bottom:6px'>{text}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div style='text-align:left; background:#e6e6e6; color:black; padding:12px; border-radius:8px; margin-bottom:6px'>{text}</div>", unsafe_allow_html=True)
 
-# ----------------------------------------------------------------
-# 12) Summary of saved artifacts
-print("\nSaved files in", OUT_DIR, ":")
-print(os.listdir(OUT_DIR))
-# Save a JSON summary of training metrics if available
-summary = {}
-if 'res_batt' in locals() and isinstance(res_batt, dict) and res_batt.get("metrics"):
-    summary['battery'] = res_batt['metrics']
-if 'res_eco' in locals() and isinstance(res_eco, dict) and res_eco.get("metrics"):
-    summary['eco'] = res_eco['metrics']
-if 'res_maint' in locals() and isinstance(res_maint, dict) and res_maint.get("metrics"):
-    summary['maintenance'] = res_maint['metrics']
-with open(os.path.join(OUT_DIR, "training_summary_extended.json"), "w") as f:
-    json.dump(summary, f, indent=2)
-print("Saved training_summary_extended.json")
+    q = st.text_input("Ask about battery, charging, maintenance...", key="query_input")
+    if st.button("Send", key="send_msg"):
+        if q:
+            st.session_state['chat_history'].append(("You", q))
+            # rule-based
+            ql = q.lower()
+            reply = None
+            if "best range" in ql or "longest range" in ql:
+                if not evc.empty and 'electric_range_km' in evc.columns:
+                    top = evc.sort_values('electric_range_km', ascending=False).iloc[0]
+                    reply = f"Top range: {top.get('make','')} {top.get('model','')} ~{int(top.get('electric_range_km',0))} km."
+                else:
+                    reply = "Upload EV data to compute best range."
+            elif "charge" in ql and "cost" in ql:
+                if not stc.empty and 'cost_usd_per_kwh' in stc.columns:
+                    reply = f"Median charging cost (loaded stations): ${stc['cost_usd_per_kwh'].median():.2f}/kWh"
+                else:
+                    reply = "Charging station data not loaded."
+            elif "battery health" in ql or "soh" in ql:
+                reply = "Provide model year and fast-charge frequency and I can estimate SoH. (e.g., 'Nexon EV 2022, 2 fast charges/week')"
+            else:
+                # fallback generic
+                reply = "Sorry, I don't know that directly. Ask about 'best range', 'charging cost', or 'battery health'."
+            st.session_state['chat_history'].append(("Bot", reply))
+            # clear text input
+            st.session_state['query_input'] = ""
 
+    st.caption("Tip: provide an OpenAI key in the sidebar to enable generative responses (paid feature).")
 
+# -------------------------
+# Footer
+# -------------------------
+st.markdown("<div style='margin-top:24px; color:#6b7280'>© EV IntelliSense — Rushmitha Arelli</div>", unsafe_allow_html=True)
